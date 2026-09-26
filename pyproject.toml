@@ -1,0 +1,120 @@
+[project]
+name = "tokbin-core"
+version = "0.1.0.dev0"
+description = "Tokenized corpora as memory-mappable binary shards: write, read, mix, verify."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Krysyuk" }]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
+dependencies = [
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+# Compression for pack/unpack on Python < 3.14 (3.14 has compression.zstd in stdlib).
+zstd = ["zstandard>=0.22"]
+# Dataset adapter for torch DataLoader.
+torch = ["torch>=2.0"]
+# Loading a tokenizer by name (roadmap).
+hub = ["huggingface-hub>=0.23"]
+
+[project.scripts]
+tokbin = "tokbin.cli.main:main"
+
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tokbin"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/tokbin", "tests", "README.md", "LICENSE", "CHANGELOG.md"]
+
+[tool.uv.workspace]
+members = ["packages/tokbin"]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.18",
+    "pytest>=8.4",
+    "ruff>=0.16.2",
+]
+# Everything the full mode needs. CI for the core mode syncs without this group.
+full = [
+    "tokenizers>=0.15",
+]
+
+[tool.uv]
+default-groups = ["dev", "full"]
+
+# --- ruff -------------------------------------------------------------------
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests", "scripts"]
+# Markdown is not formatted: code samples in the docs are aligned by hand.
+extend-exclude = ["*.md"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F",   # pycodestyle, pyflakes
+    "I",             # import order
+    "B",             # bugbear: common bugs
+    "UP",            # modern syntax
+    "N",             # naming
+    "ANN",           # mandatory annotations
+    "SIM", "PERF",   # simplifications, performance
+    "PTH",           # pathlib instead of os.path
+    "S",             # security: pickle, tarfile, subprocess
+    "T20",           # no print in the library
+    "TID",           # no module-level imports of optional packages
+    "RUF",
+]
+
+[tool.ruff.lint.flake8-tidy-imports]
+# Spec 2.4: optional packages are imported only inside functions.
+banned-module-level-imports = ["tokenizers", "torch", "zstandard", "huggingface_hub"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/tokbin/cli/**" = ["T20"]    # only the CLI may print
+"scripts/**" = ["T20", "S603"]
+"tests/**" = ["S101", "S603", "ANN", "TID253"]
+
+# --- mypy -------------------------------------------------------------------
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+files = ["src"]
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = ["tokenizers", "tokenizers.*", "zstandard", "torch", "torch.*"]
+ignore_missing_imports = true
+
+# --- pytest -----------------------------------------------------------------
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
+xfail_strict = true
+filterwarnings = ["error"]
+markers = [
+    "requires_tokenizers: the test needs the tokenizers package (full mode)",
+]

@@ -1,0 +1,25 @@
+# Meta-package without code: `pip install tokbin` = tokbin-core + tokenizers (write and read).
+# The version always matches tokbin-core; enforced by scripts/check_versions.py.
+
+[project]
+name = "tokbin"
+version = "0.1.0.dev0"
+description = "Tokenized corpora as memory-mappable binary shards (full install: write and read)."
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Krysyuk" }]
+requires-python = ">=3.10"
+dependencies = [
+    "tokbin-core==0.1.0.dev0",
+    "tokenizers>=0.15",
+]
+
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+bypass-selection = true
+
+[tool.uv.sources]
+tokbin-core = { workspace = true }
