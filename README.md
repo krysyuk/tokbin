@@ -20,10 +20,12 @@ which is required for writing datasets.
 
 ```
 uv sync --all-packages
-uv run ruff check && uv run ruff format --check
-uv run mypy
-uv run pytest
+git config core.hooksPath scripts/hooks   # enable the pre-commit quality gate
 ```
+
+The pre-commit hook runs ruff, mypy, the test suite and a guard against non-English
+text in staged files. The full OS x Python matrix runs in GitHub Actions on demand and
+on release tags.
 
 ## License
 

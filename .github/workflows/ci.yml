@@ -1,9 +1,12 @@
 name: CI
 
+# Everyday checks run locally in the pre-commit hook (scripts/hooks/pre-commit).
+# This workflow covers what a single machine cannot: the full OS x Python matrix.
+# Run it by hand before a release; it also runs on release tags.
 on:
+  workflow_dispatch:
   push:
-    branches: [main]
-  pull_request:
+    tags: ["v*"]
 
 permissions:
   contents: read

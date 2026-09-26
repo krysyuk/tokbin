@@ -1,0 +1,24 @@
+#!/bin/sh
+# Local quality gate. Enable once per clone: git config core.hooksPath scripts/hooks
+# Skip in an emergency with: git commit --no-verify
+set -eu
+cd "$(git rev-parse --show-toplevel)"
+
+if git diff --cached --quiet; then
+    exit 0
+fi
+
+step() { printf '\n== %s\n' "$1"; }
+
+step "staged text guard"
+uv run --quiet python scripts/check_staged.py
+step "ruff check"
+uv run --quiet ruff check
+step "ruff format"
+uv run --quiet ruff format --check
+step "mypy"
+uv run --quiet mypy
+step "versions"
+uv run --quiet python scripts/check_versions.py
+step "pytest"
+uv run --quiet pytest -q
