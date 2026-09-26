@@ -6,6 +6,7 @@ nothing but declarations.
 
 from __future__ import annotations
 
+from tokbin.dataset import Dataset
 from tokbin.errors import (
     CompatibilityError,
     CompatibilityWarning,
@@ -17,6 +18,7 @@ from tokbin.errors import (
     FormatError,
     IntegrityError,
     InternalError,
+    OutOfRangeError,
     ResumeError,
     SchemaVersionError,
     ShardingWarning,
@@ -24,6 +26,11 @@ from tokbin.errors import (
     TokbinWarning,
     UnsupportedFeatureError,
 )
+from tokbin.read.source import Source, read_source
+from tokbin.write.config import ErrorPolicy, WriterConfig
+from tokbin.write.documents import Segment
+from tokbin.write.result import Issue, WriteResult, WriteStats
+from tokbin.write.stream_writer import StreamWriter
 
 __all__ = [
     "CompatibilityError",
@@ -32,17 +39,28 @@ __all__ = [
     "ContractError",
     "DataError",
     "DataQualityWarning",
+    "Dataset",
     "DependencyError",
+    "ErrorPolicy",
     "FormatError",
     "IntegrityError",
     "InternalError",
+    "Issue",
+    "OutOfRangeError",
     "ResumeError",
     "SchemaVersionError",
+    "Segment",
     "ShardingWarning",
+    "Source",
+    "StreamWriter",
     "TokbinError",
     "TokbinWarning",
     "UnsupportedFeatureError",
+    "WriteResult",
+    "WriteStats",
+    "WriterConfig",
     "__version__",
+    "read_source",
 ]
 
 

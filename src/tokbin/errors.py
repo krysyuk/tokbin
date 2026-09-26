@@ -27,6 +27,7 @@ __all__ = [
     "FormatError",
     "IntegrityError",
     "InternalError",
+    "OutOfRangeError",
     "ResumeError",
     "SchemaVersionError",
     "ShardingWarning",
@@ -117,6 +118,13 @@ class ConfigError(TokbinError):
     """Invalid parameters."""
 
     categories = frozenset("C")
+
+
+class OutOfRangeError(ConfigError, IndexError):
+    """A position, document number or window outside the data.
+
+    Inherits ``IndexError`` so that ordinary indexing idioms keep working.
+    """
 
 
 class ContractError(TokbinError):

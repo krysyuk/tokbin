@@ -86,6 +86,9 @@ select = [
     "RUF",
 ]
 
+[tool.ruff.lint.isort]
+known-local-folder = ["support"]
+
 [tool.ruff.lint.flake8-tidy-imports]
 # Spec 2.4: optional packages are imported only inside functions.
 banned-module-level-imports = ["tokenizers", "torch", "zstandard", "huggingface_hub"]
@@ -93,7 +96,8 @@ banned-module-level-imports = ["tokenizers", "torch", "zstandard", "huggingface_
 [tool.ruff.lint.per-file-ignores]
 "src/tokbin/cli/**" = ["T20"]    # only the CLI may print
 "scripts/**" = ["T20", "S603"]
-"tests/**" = ["S101", "S603", "ANN", "TID253"]
+"tests/fixtures/*.py" = ["T20"]
+"tests/**" = ["S101", "S106", "S603", "ANN", "TID253"]  # S106: "token" is not a password
 
 # --- mypy -------------------------------------------------------------------
 
@@ -114,6 +118,8 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
+# tests/support.py holds helpers shared by test modules.
+pythonpath = ["tests"]
 addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
 xfail_strict = true
 filterwarnings = ["error"]

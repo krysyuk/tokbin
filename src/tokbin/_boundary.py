@@ -1,26 +1,45 @@
 """The public API boundary.
 
 Everything that reaches the user either belongs to the :class:`TokbinError` hierarchy
-or is wrapped in :class:`InternalError` with the cause chain preserved. Left untouched:
+or is wrapped in :class:`InternalError` with the cause chain preserved. Passed through
+unchanged:
 
 - ``KeyboardInterrupt`` and ``SystemExit``: they are not ``Exception``, an interrupt
   stays an interrupt;
 - warnings turned into exceptions by the user (``-W error``): that is the user's
-  choice, not a library bug.
+  choice, not a library bug;
+- ``OSError`` (disk full, permission denied, missing path): a problem of the
+  environment with its own errno and path, not a library bug;
+- exceptions raised by user code that tokbin calls, such as the document generator
+  (marked with :func:`mark_user_error`): they belong to the user.
 """
 
 from __future__ import annotations
 
+import contextlib
 import functools
 from collections.abc import Callable
 from typing import ParamSpec, TypeVar
 
 from tokbin.errors import InternalError, TokbinError
 
-__all__ = ["public_api"]
+__all__ = ["is_user_error", "mark_user_error", "public_api"]
 
 P = ParamSpec("P")
 R = TypeVar("R")
+
+_USER_ERROR_ATTR = "__tokbin_user_error__"
+
+
+def mark_user_error(exc: BaseException) -> BaseException:
+    """Mark an exception raised by user code so the boundary lets it through as is."""
+    with contextlib.suppress(AttributeError, TypeError):  # exotic exception types
+        setattr(exc, _USER_ERROR_ATTR, True)
+    return exc
+
+
+def is_user_error(exc: BaseException) -> bool:
+    return bool(getattr(exc, _USER_ERROR_ATTR, False))
 
 
 def public_api(func: Callable[P, R]) -> Callable[P, R]:
@@ -39,9 +58,11 @@ def public_api(func: Callable[P, R]) -> Callable[P, R]:
             if exc.where is None:
                 exc.where = where
             raise
-        except Warning:
+        except (Warning, OSError):
             raise
         except Exception as exc:
+            if is_user_error(exc):
+                raise
             raise InternalError.wrap(exc, where=where) from exc
 
     return wrapper

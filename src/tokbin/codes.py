@@ -77,14 +77,59 @@ DTYPE_TOO_NARROW = _register("TB-C202", "Explicit dtype is too narrow for the vo
 DTYPE_UNSUPPORTED = _register("TB-C203", "Unsupported dtype")
 SPLIT_INVALID = _register("TB-C204", "Invalid split name")
 SOURCE_NAME_INVALID = _register("TB-C205", "Invalid source name")
+SPLIT_EXISTS = _register("TB-C206", "Split already exists in the source")
+TARGET_NOT_A_SOURCE = _register("TB-C207", "Target directory exists and is not a tokbin source")
+NO_EOS_TOKEN = _register("TB-C208", "Tokenizer has no end-of-sequence token")
+NO_BOS_TOKEN = _register("TB-C209", "Tokenizer has no beginning-of-sequence token")
+CONFIG_VALUE_INVALID = _register("TB-C210", "Invalid configuration value")
+SPECIAL_TOKEN_NOT_FOUND = _register("TB-C211", "Special token is not in the tokenizer vocabulary")
+TOKENIZER_FILE_INVALID = _register("TB-C212", "Tokenizer file cannot be loaded")
+TOKENIZER_LIMITS_DISABLED = _register("TB-C213", "Tokenizer truncation and padding were disabled")
+WRITER_NOT_FINISHED = _register("TB-C214", "Writer is not finished")
+SPECIAL_TOKENS_DETECTED = _register("TB-C215", "Special tokens were detected automatically")
+SPLIT_NOT_FOUND = _register("TB-C301", "Split is not in the source")
+OUT_OF_RANGE = _register("TB-C302", "Position is out of range")
+RNG_REQUIRED = _register("TB-C303", "A numpy random Generator is required")
+WINDOW_TOO_LARGE = _register("TB-C304", "Window is larger than the split")
 
 # --- K: contract --------------------------------------------------------------------
 
 TOKEN_IDS_INVALID = _register("TB-K201", "Tokenizer returned invalid token ids")
+DOCUMENT_FORMS_MIXED = _register("TB-K202", "Documents mix different forms")
+DOCUMENT_FORM_INVALID = _register("TB-K203", "Document has an unsupported form")
+TOO_MANY_SKIPPED = _register("TB-K204", "Too many documents were skipped")
+TOKENIZER_UNSUPPORTED = _register("TB-K205", "Unsupported tokenizer object")
 
 # --- D: data ------------------------------------------------------------------------
 
+DOCUMENT_NOT_UTF8 = _register("TB-D201", "Document is not valid UTF-8")
 TOKEN_ID_OUT_OF_RANGE = _register("TB-D202", "Token id is out of range for the dtype")
+DOCUMENT_EMPTY = _register("TB-D203", "Document is empty")
+TOKENIZER_FAILED = _register("TB-D204", "Tokenizer failed on the document")
+DUPLICATE_DOC_ID = _register("TB-D205", "Duplicate document id")
+
+# --- S: sharding --------------------------------------------------------------------
+
+DOC_LARGER_THAN_SHARD = _register("TB-S201", "Document is larger than a whole shard")
+DOC_LARGE_FOR_SHARD = _register("TB-S202", "Document is larger than 5% of a shard")
+DOCS_SPLIT_ACROSS_SHARDS = _register("TB-S203", "Documents are split across shards")
+
+# --- I: integrity -------------------------------------------------------------------
+
+SHARD_MISSING = _register("TB-I301", "Shard is missing")
+SHARD_CORRUPT = _register("TB-I302", "Shard is corrupted")
+SHARD_WRONG_SIZE = _register("TB-I303", "Shard has the wrong size")
+INDEX_MISSING = _register("TB-I304", "Index file is missing")
+INDEX_CORRUPT = _register("TB-I305", "Index file is corrupted")
+
+# --- M: compatibility ---------------------------------------------------------------
+
+TOKENIZER_MISMATCH = _register("TB-M201", "Existing source uses a different tokenizer")
+DTYPE_MISMATCH = _register("TB-M202", "Existing source uses a different dtype")
+
+# --- R: resume ----------------------------------------------------------------------
+
+PARTIAL_EXISTS = _register("TB-R201", "An unfinished write already exists")
 
 # --- F: format ----------------------------------------------------------------------
 
@@ -101,6 +146,7 @@ FEATURE_UNSUPPORTED = _register("TB-F109", "Feature is not supported by this tok
 # --- P: dependencies ----------------------------------------------------------------
 
 DEPENDENCY_MISSING = _register("TB-P001", "Required package is not installed")
+WRITE_UNAVAILABLE = _register("TB-P002", "Writing is not available in tokbin-core")
 
 # --- X: internal --------------------------------------------------------------------
 

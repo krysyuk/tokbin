@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "tokbin_version": "0.1.0.dev0",
+  "modality": "text",
+  "packing": "stream",
+  "dtype": "uint16",
+  "item_shape": [],
+  "byteorder": "little",
+  "vocab_size": 303,
+  "tokenizer_id": null,
+  "tokenizer_hash": "5b6c9ce06a2c8850",
+  "eos_id": 1,
+  "bos_id": 2,
+  "splits": {
+    "train": {
+      "created_at": "2026-09-26T10:17:28Z",
+      "n_items": 303,
+      "n_docs": 40,
+      "n_skipped": 0,
+      "has_split_docs": true,
+      "shards": [
+        {
+          "name": "train-00000.bin",
+          "n_items": 128,
+          "n_bytes": 256,
+          "sha256": "064b836c031d84857a96a57391e8e526b5785ecafd090253c2c935f49a7679c4"
+        },
+        {
+          "name": "train-00001.bin",
+          "n_items": 128,
+          "n_bytes": 256,
+          "sha256": "3e293714f423ebb28d77a7a0c894bb71ed27d419834dd5f7eed24af73e1b85b3"
+        },
+        {
+          "name": "train-00002.bin",
+          "n_items": 47,
+          "n_bytes": 94,
+          "sha256": "196920866ea5fd43cd3e8e99b4caa734cf8444898f74ee8b59f3f6ec21bd8434"
+        }
+      ]
+    },
+    "valid": {
+      "created_at": "2026-09-26T10:17:28Z",
+      "n_items": 57,
+      "n_docs": 5,
+      "n_skipped": 0,
+      "has_split_docs": false,
+      "shards": [
+        {
+          "name": "valid-00000.bin",
+          "n_items": 57,
+          "n_bytes": 114,
+          "sha256": "bea9aad980acca4433d75a1a42e7e25f0d37f77636b901449b4c4f94458fe9ac"
+        }
+      ]
+    }
+  }
+}

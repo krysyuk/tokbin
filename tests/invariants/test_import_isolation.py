@@ -50,6 +50,8 @@ def _third_party(result: dict[str, Any]) -> set[str]:
         "import tokbin",
         "import tokbin.errors, tokbin.codes, tokbin._deps, tokbin._fs, tokbin._boundary",
         "import tokbin.cli.main",
+        "import tokbin.write.stream_writer, tokbin.tokenizer.resolve, tokbin.dataset",
+        "from tokbin import Dataset, StreamWriter, WriterConfig",
     ],
 )
 def test_import_pulls_only_numpy(imports: str) -> None:

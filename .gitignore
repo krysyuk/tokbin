@@ -19,3 +19,4 @@ wheels/
 
 # Personal specification (private, not published)
 docs/spec.md
+experiments/

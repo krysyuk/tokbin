@@ -21,17 +21,22 @@ __all__ = [
     "MIX_JSON",
     "PARTIAL_SUFFIX",
     "SPLITS",
+    "TOKENIZER_CONFIG_JSON",
     "TOKENIZER_DIR",
     "TOKENIZER_JSON",
     "check_source_name",
     "check_split",
     "ids_idx_name",
+    "ids_idx_raw_name",
     "ids_name",
     "is_valid_source_name",
     "offsets_name",
+    "offsets_raw_name",
+    "open_shard_name",
     "resolve_inside",
     "shard_name",
     "skipped_name",
+    "split_files",
 ]
 
 SPLITS: Final = ("train", "valid", "test")
@@ -43,6 +48,7 @@ CHECKPOINT: Final = "checkpoint.json"
 LOCK: Final = ".lock"
 TOKENIZER_DIR: Final = "tokenizer"
 TOKENIZER_JSON: Final = "tokenizer.json"
+TOKENIZER_CONFIG_JSON: Final = "tokenizer_config.json"
 PARTIAL_SUFFIX: Final = ".partial"
 
 _SOURCE_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
@@ -66,6 +72,26 @@ def ids_idx_name(split: str) -> str:
 
 def skipped_name(split: str) -> str:
     return f"{split}-skipped.jsonl"
+
+
+def offsets_raw_name(split: str) -> str:
+    """Append-only int64 offsets of a partial write; becomes ``offsets.npy`` at the end."""
+    return f"{split}-offsets.i64"
+
+
+def ids_idx_raw_name(split: str) -> str:
+    """Append-only int64 line offsets of a partial write; becomes ``ids.idx.npy``."""
+    return f"{split}-ids.idx.i64"
+
+
+def open_shard_name(split: str, index: int) -> str:
+    """A shard being written; renamed to :func:`shard_name` once closed and synced."""
+    return shard_name(split, index) + ".open"
+
+
+def split_files(split: str) -> tuple[str, ...]:
+    """Fixed-name files that belong to ``split`` in a finished source (shards excluded)."""
+    return (offsets_name(split), ids_name(split), ids_idx_name(split), skipped_name(split))
 
 
 def check_split(split: str) -> str:
