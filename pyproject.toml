@@ -98,7 +98,9 @@ banned-module-level-imports = ["tokenizers", "torch", "zstandard", "huggingface_
 # --- mypy -------------------------------------------------------------------
 
 [tool.mypy]
-python_version = "3.10"
+# numpy>=2.5 stubs need 3.12 syntax. Compatibility with 3.10 is verified by running
+# the test suite on 3.10 (pre-commit hook and the CI matrix).
+python_version = "3.12"
 strict = true
 files = ["src"]
 warn_unreachable = true

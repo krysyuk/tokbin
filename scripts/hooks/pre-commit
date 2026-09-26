@@ -22,3 +22,5 @@ step "versions"
 uv run --quiet python scripts/check_versions.py
 step "pytest"
 uv run --quiet pytest -q
+step "pytest (Python 3.10, the minimum supported version)"
+UV_PROJECT_ENVIRONMENT=.venv-py310 uv run --quiet --python 3.10 pytest -q

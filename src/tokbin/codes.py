@@ -67,6 +67,37 @@ def _register(code_id: str, title: str) -> Code:
     return code
 
 
+# Numbering inside a category: 1xx on-disk format, 2xx writing, 3xx reading and
+# verification.
+
+# --- C: configuration ---------------------------------------------------------------
+
+VOCAB_SIZE_OUT_OF_RANGE = _register("TB-C201", "Vocabulary size is out of range")
+DTYPE_TOO_NARROW = _register("TB-C202", "Explicit dtype is too narrow for the vocabulary")
+DTYPE_UNSUPPORTED = _register("TB-C203", "Unsupported dtype")
+SPLIT_INVALID = _register("TB-C204", "Invalid split name")
+SOURCE_NAME_INVALID = _register("TB-C205", "Invalid source name")
+
+# --- K: contract --------------------------------------------------------------------
+
+TOKEN_IDS_INVALID = _register("TB-K201", "Tokenizer returned invalid token ids")
+
+# --- D: data ------------------------------------------------------------------------
+
+TOKEN_ID_OUT_OF_RANGE = _register("TB-D202", "Token id is out of range for the dtype")
+
+# --- F: format ----------------------------------------------------------------------
+
+METADATA_TOO_LARGE = _register("TB-F101", "Metadata file is too large")
+METADATA_NOT_JSON = _register("TB-F102", "Metadata file is not valid JSON")
+METADATA_FIELD_INVALID = _register("TB-F103", "Invalid metadata field")
+METADATA_MISSING = _register("TB-F104", "Metadata file is missing")
+METADATA_INCONSISTENT = _register("TB-F105", "Metadata is inconsistent")
+PATH_ESCAPES_ROOT = _register("TB-F106", "Path escapes the dataset root")
+SCHEMA_TOO_NEW = _register("TB-F107", "Format schema is newer than this tokbin supports")
+SCHEMA_TOO_OLD = _register("TB-F108", "Format schema is no longer supported")
+FEATURE_UNSUPPORTED = _register("TB-F109", "Feature is not supported by this tokbin version")
+
 # --- P: dependencies ----------------------------------------------------------------
 
 DEPENDENCY_MISSING = _register("TB-P001", "Required package is not installed")
