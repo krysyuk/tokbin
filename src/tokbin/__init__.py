@@ -26,6 +26,18 @@ from tokbin.errors import (
     TokbinWarning,
     UnsupportedFeatureError,
 )
+from tokbin.ops.clean import CleanResult, clean_source
+from tokbin.ops.doctor import DoctorReport, doctor
+from tokbin.ops.inspect import (
+    CorpusInfo,
+    PartialInfo,
+    Problem,
+    SourceInfo,
+    SplitInfo,
+    inspect_corpus,
+    inspect_source,
+)
+from tokbin.ops.verify import ShardCheck, VerifyProgress, VerifyReport, verify_source
 from tokbin.read.source import Source, read_source
 from tokbin.write.config import ErrorPolicy, WriterConfig
 from tokbin.write.documents import Segment
@@ -33,34 +45,49 @@ from tokbin.write.result import Issue, WriteResult, WriteStats
 from tokbin.write.stream_writer import StreamWriter
 
 __all__ = [
+    "CleanResult",
     "CompatibilityError",
     "CompatibilityWarning",
     "ConfigError",
     "ContractError",
+    "CorpusInfo",
     "DataError",
     "DataQualityWarning",
     "Dataset",
     "DependencyError",
+    "DoctorReport",
     "ErrorPolicy",
     "FormatError",
     "IntegrityError",
     "InternalError",
     "Issue",
     "OutOfRangeError",
+    "PartialInfo",
+    "Problem",
     "ResumeError",
     "SchemaVersionError",
     "Segment",
+    "ShardCheck",
     "ShardingWarning",
     "Source",
+    "SourceInfo",
+    "SplitInfo",
     "StreamWriter",
     "TokbinError",
     "TokbinWarning",
     "UnsupportedFeatureError",
+    "VerifyProgress",
+    "VerifyReport",
     "WriteResult",
     "WriteStats",
     "WriterConfig",
     "__version__",
+    "clean_source",
+    "doctor",
+    "inspect_corpus",
+    "inspect_source",
     "read_source",
+    "verify_source",
 ]
 
 

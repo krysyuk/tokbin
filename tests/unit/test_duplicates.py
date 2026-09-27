@@ -59,3 +59,14 @@ def test_many_repeats_use_the_hash_count(monkeypatch: pytest.MonkeyPatch) -> Non
     report = hashes.report(by_index.__getitem__)
     assert report.count == 9
     assert report.example == "same"
+
+
+def test_hash_by_position() -> None:
+    from tokbin.write import duplicates
+
+    hashes = duplicates.IdHashes()
+    ids = [f"id-{i}" for i in range(duplicates._CHUNK + 3)]
+    for doc_id in ids:
+        hashes.add(doc_id)
+    for i in (0, 1, duplicates._CHUNK - 1, duplicates._CHUNK, len(ids) - 1):
+        assert hashes.at(i) == duplicates.IdHashes.digest(ids[i])

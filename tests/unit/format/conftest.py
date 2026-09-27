@@ -61,7 +61,7 @@ def _checkpoint() -> dict[str, Any]:
         "n_items": 100,
         "n_docs": 8,
         "n_skipped": 2,
-        "has_split_docs": True,
+        "n_split_docs": 1,
         "closed_shards": [
             {"name": "train-00000.bin", "n_items": 100, "n_bytes": 200, "sha256": _SHA},
         ],

@@ -21,7 +21,7 @@ import struct
 from collections.abc import Sequence
 from json.encoder import encode_basestring
 from pathlib import Path
-from typing import BinaryIO
+from typing import BinaryIO, Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -29,9 +29,18 @@ import numpy.typing as npt
 from tokbin import _fs, codes
 from tokbin.errors import InternalError, ResumeError
 from tokbin.format import naming
+from tokbin.format.checkpoint import SideFileLengths
 from tokbin.format.meta import Meta, write_meta
 
-__all__ = ["SideFiles", "create_partial", "partial_path", "publish"]
+__all__ = [
+    "SideFiles",
+    "create_partial",
+    "discard_open_shards",
+    "discard_stale_outputs",
+    "partial_exists_error",
+    "partial_path",
+    "publish",
+]
 
 _INT64 = struct.Struct("<q")
 
@@ -40,17 +49,23 @@ def partial_path(target: Path) -> Path:
     return target.with_name(target.name + naming.PARTIAL_SUFFIX)
 
 
+def partial_exists_error(partial: Path) -> ResumeError:
+    return ResumeError(
+        codes.PARTIAL_EXISTS,
+        str(partial),
+        why="a previous write of this source did not finish",
+        fix=f"pass resume=True to continue it, or delete it with `tokbin clean {partial}` "
+        "to start over",
+    )
+
+
 def create_partial(target: Path) -> Path:
     """Create an empty partial directory for ``target``."""
     partial = partial_path(target)
-    if partial.exists():
-        raise ResumeError(
-            codes.PARTIAL_EXISTS,
-            str(partial),
-            why="a previous write of this source did not finish",
-            fix=f"delete {partial} to start over",
-        )
-    partial.mkdir(parents=False)
+    try:
+        partial.mkdir(parents=False)
+    except FileExistsError:
+        raise partial_exists_error(partial) from None
     return partial
 
 
@@ -65,18 +80,57 @@ class SideFiles:
     The ``.i64`` files become ``.npy`` files in :meth:`finish`.
     """
 
-    __slots__ = ("_dir", "_ids", "_ids_pos", "_idx", "_offsets", "_skipped", "split")
+    __slots__ = (
+        "_dir",
+        "_ids",
+        "_ids_pos",
+        "_idx",
+        "_n_docs",
+        "_offsets",
+        "_skipped",
+        "_skipped_pos",
+        "split",
+    )
 
-    def __init__(self, directory: Path, split: str) -> None:
+    def __init__(
+        self, directory: Path, split: str, *, resume: SideFileLengths | None = None
+    ) -> None:
+        """Create the files, or with ``resume`` reopen them cut back to those lengths."""
         self._dir = directory
         self.split = split
-        self._offsets: BinaryIO = (directory / naming.offsets_raw_name(split)).open("xb")
-        self._ids: BinaryIO = (directory / naming.ids_name(split)).open("xb")
-        self._idx: BinaryIO = (directory / naming.ids_idx_raw_name(split)).open("xb")
-        self._skipped: BinaryIO = (directory / naming.skipped_name(split)).open("xb")
-        self._ids_pos = 0
-        self._offsets.write(_INT64.pack(0))
-        self._idx.write(_INT64.pack(0))
+        paths = self._paths()
+        if resume is None:
+            mode: Literal["xb", "ab"] = "xb"
+            self._ids_pos = self._skipped_pos = self._n_docs = 0
+        else:
+            _truncate_all(paths, resume)
+            mode = "ab"
+            self._ids_pos, self._skipped_pos = resume.ids, resume.skipped
+            self._n_docs = resume.offsets // _INT64.size - 1
+        self._offsets: BinaryIO = paths[0].open(mode)
+        self._ids: BinaryIO = paths[1].open(mode)
+        self._idx: BinaryIO = paths[2].open(mode)
+        self._skipped: BinaryIO = paths[3].open(mode)
+        if resume is None:
+            self._offsets.write(_INT64.pack(0))
+            self._idx.write(_INT64.pack(0))
+
+    def _paths(self) -> tuple[Path, Path, Path, Path]:
+        d, split = self._dir, self.split
+        return (
+            d / naming.offsets_raw_name(split),
+            d / naming.ids_name(split),
+            d / naming.ids_idx_raw_name(split),
+            d / naming.skipped_name(split),
+        )
+
+    def lengths(self) -> SideFileLengths:
+        """Make everything written so far durable and report the file lengths."""
+        self.sync()
+        entries = (self._n_docs + 1) * _INT64.size
+        return SideFileLengths(
+            ids=self._ids_pos, ids_idx=entries, offsets=entries, skipped=self._skipped_pos
+        )
 
     def add_docs(self, doc_ids: Sequence[str | None], ends: npt.NDArray[np.int64]) -> None:
         """Record written documents; document ``k`` ends at global item ``ends[k]``."""
@@ -97,10 +151,13 @@ class SideFiles:
         self._idx.write(positions.astype("<i8").tobytes())
         self._offsets.write(ends.astype("<i8").tobytes())
         self._ids_pos = int(positions[-1])
+        self._n_docs += len(doc_ids)
 
     def add_skipped(self, input_index: int, doc_id: str | None, code: str, reason: str) -> None:
         record = {"input_index": input_index, "id": doc_id, "code": code, "reason": reason}
-        self._skipped.write((json.dumps(record, ensure_ascii=False) + "\n").encode("utf-8"))
+        line = (json.dumps(record, ensure_ascii=False) + "\n").encode("utf-8")
+        self._skipped.write(line)
+        self._skipped_pos += len(line)
 
     def sync(self) -> None:
         for f in (self._offsets, self._ids, self._idx, self._skipped):
@@ -111,7 +168,11 @@ class SideFiles:
             f.close()
 
     def finish(self) -> None:
-        """Sync, close, and convert the raw int64 files to ``.npy``."""
+        """Sync, close, and write the raw int64 files as ``.npy``.
+
+        The raw files stay until publication: a write interrupted between here and the
+        final rename can still be resumed from its checkpoint.
+        """
         self.sync()
         self.close()
         _raw_to_npy(
@@ -124,6 +185,24 @@ class SideFiles:
         )
 
 
+def _truncate_all(paths: tuple[Path, Path, Path, Path], lengths: SideFileLengths) -> None:
+    """Cut the side files back to a checkpoint, dropping what was written after it."""
+    wanted = (lengths.offsets, lengths.ids, lengths.ids_idx, lengths.skipped)
+    for path, length in zip(paths, wanted, strict=True):
+        size = path.stat().st_size if path.is_file() else -1
+        if size < length:
+            raise ResumeError(
+                codes.PARTIAL_DAMAGED,
+                str(path),
+                why=f"the checkpoint expects at least {length} bytes, the file has "
+                f"{max(size, 0)}" + ("" if size >= 0 else " (it is missing)"),
+                fix=f"delete the unfinished write (`tokbin clean {path.parent}`) and "
+                "start the write again",
+            )
+    for path, length in zip(paths, wanted, strict=True):
+        os.truncate(path, length)
+
+
 def _raw_to_npy(raw: Path, npy: Path) -> None:
     """Prefix a raw little-endian int64 file with an ``.npy`` header, streaming."""
     n = raw.stat().st_size // _INT64.size
@@ -133,7 +212,6 @@ def _raw_to_npy(raw: Path, npy: Path) -> None:
         with raw.open("rb") as src:
             shutil.copyfileobj(src, out, 1024**2)
         _fs.fsync_file(out)
-    raw.unlink()
 
 
 def _split_owned(name: str, split: str) -> bool:
@@ -157,6 +235,11 @@ def _carry_over(existing: Path, partial: Path, split: str) -> None:
         if name == naming.META_JSON or name == naming.TOKENIZER_DIR or _split_owned(name, split):
             continue
         dst = partial / name
+        # Left over from a publication that was interrupted and then resumed.
+        if dst.is_dir() and not dst.is_symlink():
+            shutil.rmtree(dst)
+        elif dst.exists() or dst.is_symlink():
+            dst.unlink()
         if entry.is_dir() and not entry.is_symlink():
             shutil.copytree(entry, dst, copy_function=_link_or_copy)
         else:
@@ -188,6 +271,8 @@ def publish(partial: Path, target: Path, meta: Meta, *, replace_split: str | Non
         _carry_over(target, partial, replace_split)
     write_meta(partial, meta)
     _check_complete(partial, meta)
+    # Up to here the write can be resumed from its checkpoint.
+    _drop_work_files(partial)
     _fs.fsync_dir(partial)
 
     parent = target.parent
@@ -200,6 +285,23 @@ def publish(partial: Path, target: Path, meta: Meta, *, replace_split: str | Non
     else:
         partial.rename(target)
         _fs.fsync_dir(parent)
+
+
+def _drop_work_files(partial: Path) -> None:
+    """Files of an unfinished write that a finished source never contains.
+
+    The lock goes last: until then no other process may take the directory.
+    """
+    for path in (*partial.glob("*.i64"), partial / naming.CHECKPOINT, partial / naming.LOCK):
+        with contextlib.suppress(FileNotFoundError):
+            path.unlink()
+
+
+def discard_stale_outputs(partial: Path, split: str) -> None:
+    """Remove ``.npy`` files made by a finish that never got published."""
+    for name in (naming.offsets_name(split), naming.ids_idx_name(split)):
+        with contextlib.suppress(FileNotFoundError):
+            (partial / name).unlink()
 
 
 def discard_open_shards(partial: Path) -> None:

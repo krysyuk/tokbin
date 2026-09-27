@@ -47,9 +47,20 @@ class IdHashes:
     def __len__(self) -> int:
         return len(self._chunks) * _CHUNK + self._fill
 
+    @staticmethod
+    def digest(doc_id: str) -> int:
+        return int.from_bytes(
+            hashlib.blake2b(doc_id.encode("utf-8"), digest_size=8).digest(), "little"
+        )
+
+    def at(self, i: int) -> int:
+        """Hash of the ``i``-th id added."""
+        chunk, pos = divmod(i, _CHUNK)
+        source = self._chunks[chunk] if chunk < len(self._chunks) else self._current
+        return int(source[pos])
+
     def add(self, doc_id: str) -> None:
-        digest = hashlib.blake2b(doc_id.encode("utf-8"), digest_size=8).digest()
-        self._current[self._fill] = int.from_bytes(digest, "little")
+        self._current[self._fill] = self.digest(doc_id)
         self._fill += 1
         if self._fill == _CHUNK:
             self._chunks.append(self._current)

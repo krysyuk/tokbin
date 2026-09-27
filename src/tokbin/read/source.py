@@ -28,17 +28,16 @@ import numpy.typing as npt
 
 from tokbin import codes
 from tokbin._boundary import public_api
-from tokbin.errors import ConfigError, IntegrityError, OutOfRangeError
+from tokbin.errors import ConfigError, OutOfRangeError
 from tokbin.format import naming
 from tokbin.format.meta import Meta, SplitMeta, read_meta
 from tokbin.format.schema import source_kind
-from tokbin.read._index import corrupt_index, open_index
+from tokbin.read._files import check_shard, open_split_indexes
+from tokbin.read._index import corrupt_index
 
 __all__ = ["Source", "read_source"]
 
 TokenArray = npt.NDArray[np.unsignedinteger[Any]]
-
-_FIX_SHARD = "download the shard again and run `tokbin verify {root}`"
 
 
 @public_api
@@ -90,28 +89,18 @@ class Source:
         self.meta: Meta = read_meta(root)
         info = self._split_meta()
 
+        for shard in info.shards:
+            err = check_shard(root, info, shard)
+            if err is not None:
+                raise err
         self._shard_paths: tuple[Path, ...] = tuple(
-            self._check_shard(naming.resolve_inside(root, s.name), s.n_bytes) for s in info.shards
+            naming.resolve_inside(root, s.name) for s in info.shards
         )
         self._cum: npt.NDArray[np.int64] = np.cumsum(
             [0, *(s.n_items for s in info.shards)], dtype=np.int64
         )
         self._maps: list[np.memmap[Any, Any] | None] = [None] * len(info.shards)
-
-        self._offsets = open_index(
-            naming.resolve_inside(root, naming.offsets_name(split)),
-            length=info.n_docs + 1,
-            first=0,
-            last=info.n_items,
-        )
-        ids_path = naming.resolve_inside(root, naming.ids_name(split))
-        ids_size = ids_path.stat().st_size if ids_path.is_file() else -1
-        self._ids_idx = open_index(
-            naming.resolve_inside(root, naming.ids_idx_name(split)),
-            length=info.n_docs + 1,
-            first=0,
-            last=ids_size,
-        )
+        self._offsets, self._ids_idx = open_split_indexes(root, info)
         self._ids_map: np.memmap[Any, Any] | None = None
 
     def _split_meta(self) -> SplitMeta:
@@ -125,26 +114,6 @@ class Source:
                 why=f"the source has the splits: {available}",
                 fix="pass one of the available splits",
             ) from None
-
-    def _check_shard(self, path: Path, n_bytes: int) -> Path:
-        n_shards = len(self._split_meta().shards)
-        if not path.is_file():
-            raise IntegrityError(
-                codes.SHARD_MISSING,
-                str(path),
-                why=f"meta.json lists {n_shards} shards for {self.split!r}; "
-                "this one is not on disk",
-                fix=_FIX_SHARD.format(root=self.path),
-            )
-        size = path.stat().st_size
-        if size != n_bytes:
-            raise IntegrityError(
-                codes.SHARD_WRONG_SIZE,
-                str(path),
-                why=f"meta.json expects {n_bytes} bytes, the file has {size}",
-                fix=_FIX_SHARD.format(root=self.path),
-            )
-        return path
 
     # --- pickling ---------------------------------------------------------------------
 

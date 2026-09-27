@@ -13,13 +13,24 @@ item coordinates and know nothing about shards.
 
 On success the context manager publishes the source atomically. On any exception
 (``KeyboardInterrupt`` included) the open shard is dropped and the partial directory
-is left in place; no finished source appears.
+is left in place with a valid checkpoint; no finished source appears.
+
+Reliability (spec 8.2, 8.3). One process writes a partial directory at a time
+(``.lock``). A checkpoint is written when the write starts and after every closed
+shard; it records the counters, the closed shards and the lengths of the side files.
+``resume=True`` continues an interrupted write from its last checkpoint: side files are
+cut back to the recorded lengths, the documents already consumed are skipped (their
+ids are compared with the checkpoint), and the document that straddled the last shard
+boundary is written without the items already in closed shards. The result is byte
+for byte the one of an uninterrupted write, provided the generator yields the same
+documents in the same order.
 """
 
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable
+import shutil
+from collections.abc import Callable, Iterable
 from dataclasses import replace
 from pathlib import Path
 from types import TracebackType
@@ -28,9 +39,10 @@ from typing import Final, NamedTuple
 import numpy as np
 import numpy.typing as npt
 
-from tokbin import codes
+from tokbin import _fs, codes
 from tokbin._boundary import mark_user_error, public_api
 from tokbin._version import get_version
+from tokbin.codes import Code
 from tokbin.errors import (
     CompatibilityError,
     ConfigError,
@@ -38,19 +50,31 @@ from tokbin.errors import (
     DataError,
     DataQualityWarning,
     InternalError,
+    ResumeError,
     ShardingWarning,
+    TokbinError,
 )
 from tokbin.format import naming
 from tokbin.format._time import utc_timestamp
+from tokbin.format.checkpoint import Checkpoint, read_checkpoint, write_checkpoint
 from tokbin.format.dtypes import TokenArray, dtype_for_vocab, resolve_dtype, to_dtype_checked
 from tokbin.format.meta import Meta, ShardInfo, SplitMeta, read_meta
 from tokbin.format.schema import SCHEMA_VERSION, source_kind
 from tokbin.tokenizer.protocol import TokenizerProtocol
 from tokbin.tokenizer.resolve import TokenizerLike, resolve_tokenizer
-from tokbin.write.config import ErrorPolicy, WriterConfig
+from tokbin.write.config import ErrorPolicy, WriterConfig, config_hash
 from tokbin.write.documents import Document, DocumentNormalizer, Mode, decode_text
 from tokbin.write.duplicates import IdHashes
-from tokbin.write.partial import SideFiles, create_partial, discard_open_shards, publish
+from tokbin.write.lock import WriteLock
+from tokbin.write.partial import (
+    SideFiles,
+    create_partial,
+    discard_open_shards,
+    discard_stale_outputs,
+    partial_exists_error,
+    partial_path,
+    publish,
+)
 from tokbin.write.result import IssueCollector, WriteResult, WriteStats
 from tokbin.write.shard import ShardFile
 
@@ -88,6 +112,32 @@ def _where(doc: Document, index: int) -> str:
     return f"document {doc.id!r}" if doc.id is not None else f"input #{index}"
 
 
+class _Skip(NamedTuple):
+    input_index: int
+    doc: Document
+    error: DataError
+
+
+def _resume_error(code: Code, partial: Path, why: str, fix: str) -> ResumeError:
+    return ResumeError(code, str(partial), why=why, fix=fix)
+
+
+def _reason(err: DataError) -> str:
+    return f"{err.detail}: {err.why}" if err.detail else err.why
+
+
+def read_checkpoint_for_resume(partial: Path) -> Checkpoint:
+    try:
+        return read_checkpoint(partial)
+    except TokbinError as exc:
+        raise _resume_error(
+            codes.PARTIAL_DAMAGED,
+            partial,
+            f"its checkpoint cannot be read: {exc.what} ({exc.why})",
+            f"delete the unfinished write (`tokbin clean {partial}`) and start again",
+        ) from exc
+
+
 class StreamWriter:
     """Writes one split of one source."""
 
@@ -101,12 +151,14 @@ class StreamWriter:
         policy: ErrorPolicy | None = None,
         mode: Mode | None = None,
         overwrite: bool = False,
+        resume: bool = False,
     ) -> None:
         self._target = Path(path)
         naming.check_source_name(self._target.name)
         self._config = config if config is not None else WriterConfig()
         self._policy = policy if policy is not None else ErrorPolicy()
         self._overwrite = overwrite
+        self._resume = resume
         self._normalizer = DocumentNormalizer(mode)
         self._tok: TokenizerProtocol = resolve_tokenizer(
             tokenizer, eos_token=self._config.eos_token, bos_token=self._config.bos_token
@@ -114,12 +166,14 @@ class StreamWriter:
         self._issues = IssueCollector()
 
         self._partial: Path | None = None
+        self._lock: WriteLock | None = None
         self._side: SideFiles | None = None
         self._shard: ShardFile | None = None
         self._closed_shards: list[ShardInfo] = []
         self._existing: Meta | None = None
         self._result: WriteResult | None = None
         self._dtype = np.dtype("uint8")
+        self._config_hash = ""
         self._shard_items = 0
         self._bos: int | None = None
         self._eos: int | None = None
@@ -127,11 +181,27 @@ class StreamWriter:
         self._pending_chars = 0
         self._id_hashes = IdHashes()
 
+        #: Input documents seen, skipped ones included (the input index of the next one).
         self._n_input = 0
+        #: Counters of what is recorded in the side files.
         self._n_docs = 0
         self._n_skipped = 0
         self._n_items = 0
         self._n_split_docs = 0
+        #: Id of the last input document of the previous batch (for checkpoints).
+        self._prev_last_id: str | None = None
+
+        # Resume state: inputs still to skip, the id the last skipped one must have,
+        # and the items of the next document that are already in closed shards.
+        self._skip_inputs = 0
+        self._expected_last_id: str | None = None
+        self._drop_items = 0
+        #: Input index of the first document after the resumed position.
+        self._resume_input = 0
+        #: Per-document check of consumed inputs (see _check_consumed).
+        self._check_every_id = False
+        self._skipped_ids: dict[int, str | None] = {}
+        self._consumed_kept = 0
 
     # --- lifecycle --------------------------------------------------------------------
 
@@ -152,7 +222,11 @@ class StreamWriter:
 
     @public_api
     def open(self) -> None:
-        """Validate everything that can be validated up front and start the write."""
+        """Validate everything that can be validated up front and start the write.
+
+        With ``resume=True`` an unfinished write of the same source continues from its
+        last checkpoint; without one, the write starts from the beginning.
+        """
         if self._partial is not None:
             return
         cfg = self._config
@@ -183,14 +257,167 @@ class StreamWriter:
             )
         self._bos = self._tok.bos_id if cfg.prepend_bos else None
         self._eos = self._tok.eos_id if cfg.append_eos else None
+        self._config_hash = config_hash(
+            cfg, dtype=self._dtype, eos_id=self._tok.eos_id, bos_id=self._tok.bos_id
+        )
 
         for code, message in self._tok.notes:
             self._issues.add(code, message, level="info")
 
         self._target.parent.mkdir(parents=True, exist_ok=True)
-        self._partial = create_partial(self._target)
-        self._tok.save(self._partial / naming.TOKENIZER_DIR)
-        self._side = SideFiles(self._partial, cfg.split)
+        partial = partial_path(self._target)
+        if partial.exists():
+            self._continue(partial)
+        else:
+            self._start(create_partial(self._target))
+
+    def _start(self, partial: Path) -> None:
+        """A fresh write: lock, tokenizer copy, empty side files, first checkpoint."""
+        lock = WriteLock(partial)
+        lock.acquire()
+        try:
+            self._tok.save(partial / naming.TOKENIZER_DIR)
+            self._side = SideFiles(partial, self._config.split)
+            self._partial, self._lock = partial, lock
+            self._write_checkpoint(consumed=0, pending=0, last_id=None)
+        except BaseException:
+            self._partial = self._lock = None
+            if self._side is not None:
+                self._side.close()
+                self._side = None
+            lock.release()
+            shutil.rmtree(partial, ignore_errors=True)
+            raise
+
+    def _continue(self, partial: Path) -> None:
+        """An unfinished write exists: resume it, or refuse without ``resume=True``."""
+        lock = WriteLock(partial)
+        lock.acquire()  # ResumeError if another process is writing it
+        if not self._resume:
+            lock.release()
+            raise partial_exists_error(partial)
+        try:
+            if not (partial / naming.CHECKPOINT).is_file():
+                # The previous run stopped before its first checkpoint: nothing was
+                # saved, so starting over is exactly resuming from zero.
+                self._clear(partial)
+                self._start_in(partial, lock)
+                return
+            self._restore(partial, read_checkpoint_for_resume(partial))
+            self._partial, self._lock = partial, lock
+        except BaseException:
+            self._partial = self._lock = None
+            if self._side is not None:
+                self._side.close()
+                self._side = None
+            lock.release()
+            raise
+
+    def _clear(self, partial: Path) -> None:
+        for entry in partial.iterdir():
+            if entry.name == naming.LOCK:
+                continue
+            if entry.is_dir() and not entry.is_symlink():
+                shutil.rmtree(entry)
+            else:
+                entry.unlink()
+
+    def _start_in(self, partial: Path, lock: WriteLock) -> None:
+        self._tok.save(partial / naming.TOKENIZER_DIR)
+        self._side = SideFiles(partial, self._config.split)
+        self._partial, self._lock = partial, lock
+        self._write_checkpoint(consumed=0, pending=0, last_id=None)
+
+    def _restore(self, partial: Path, cp: Checkpoint) -> None:
+        """Bring the writer to the state of the checkpoint."""
+        fix_settings = (
+            "resume with exactly the settings and tokenizer of the interrupted write, "
+            f"or delete it (`tokbin clean {partial}`) and start again"
+        )
+        mismatches = []
+        if cp.split != self._config.split:
+            mismatches.append(f"split {cp.split!r} vs {self._config.split!r}")
+        if cp.tokenizer_hash != self._tok.fingerprint():
+            mismatches.append(f"tokenizer {cp.tokenizer_hash} vs {self._tok.fingerprint()}")
+        if cp.dtype != self._dtype.name:
+            mismatches.append(f"dtype {cp.dtype} vs {self._dtype.name}")
+        if cp.config_hash != self._config_hash:
+            mismatches.append("WriterConfig (shard_bytes, append_eos, prepend_bos...)")
+        if mismatches:
+            raise _resume_error(
+                codes.RESUME_SETTINGS_MISMATCH,
+                partial,
+                "the interrupted write used different settings: " + "; ".join(mismatches),
+                fix_settings,
+            )
+
+        split = cp.split
+        discard_open_shards(partial)
+        discard_stale_outputs(partial, split)
+        kept = {s.name for s in cp.closed_shards}
+        for path in partial.glob(f"{split}-*.bin"):
+            if path.name not in kept:  # closed after the last checkpoint
+                path.unlink()
+        for shard in cp.closed_shards:
+            path = partial / shard.name
+            size = path.stat().st_size if path.is_file() else -1
+            if size != shard.n_bytes:
+                raise _resume_error(
+                    codes.PARTIAL_DAMAGED,
+                    partial,
+                    f"{shard.name} should have {shard.n_bytes} bytes, found "
+                    + (f"{size}" if size >= 0 else "no file"),
+                    f"delete the unfinished write (`tokbin clean {partial}`) and start again",
+                )
+        if not (partial / naming.TOKENIZER_DIR / naming.TOKENIZER_JSON).is_file():
+            self._tok.save(partial / naming.TOKENIZER_DIR)
+
+        self._side = SideFiles(partial, split, resume=cp.side_files)
+        self._closed_shards = list(cp.closed_shards)
+        self._n_input = cp.n_input_consumed
+        self._n_docs = cp.n_docs
+        self._n_skipped = cp.n_skipped
+        self._n_items = cp.n_items
+        self._n_split_docs = cp.n_split_docs
+        self._prev_last_id = cp.last_input_id
+        self._skip_inputs = cp.n_input_consumed
+        self._expected_last_id = cp.last_input_id
+        self._drop_items = cp.pending_doc_items
+        self._resume_input = cp.n_input_consumed
+        self._restore_ids(partial, cp.n_docs)
+        self._restore_skipped(partial, cp.n_skipped)
+        self._check_every_id = cp.n_docs > 0 and len(self._id_hashes) == cp.n_docs
+        self._issues.add(
+            codes.RESUMED,
+            f"{len(cp.closed_shards)} closed shards kept, "
+            f"{cp.n_input_consumed} input documents skipped",
+            level="info",
+        )
+
+    def _restore_ids(self, partial: Path, n_docs: int) -> None:
+        """Rebuild the duplicate detector from the ids already written."""
+        with (partial / naming.ids_name(self._config.split)).open("rb") as f:
+            for _, line in zip(range(n_docs), f, strict=False):
+                doc_id = json.loads(line)["id"]
+                if doc_id is not None:
+                    self._id_hashes.add(doc_id)
+
+    def _restore_skipped(self, partial: Path, n_skipped: int) -> None:
+        """Count skips recorded before the interruption (their warnings were shown)."""
+        counts: dict[str, int] = {}
+        with (partial / naming.skipped_name(self._config.split)).open("rb") as f:
+            for _, line in zip(range(n_skipped), f, strict=False):
+                record = json.loads(line)
+                counts[record["code"]] = counts.get(record["code"], 0) + 1
+                self._skipped_ids[record["input_index"]] = record["id"]
+        for code_id, count in counts.items():
+            code = codes.CODES.get(code_id)
+            if code is not None:
+                self._issues.add(
+                    code,
+                    f"before the interruption; see {naming.skipped_name(self._config.split)}",
+                    count=count,
+                )
 
     def _inspect_target(self, fingerprint: str) -> Meta | None:
         target = self._target
@@ -293,6 +520,13 @@ class StreamWriter:
             self.open()
         # Form and encoding are checked right away, so errors point at this document.
         doc = self._normalizer.normalize(raw)
+        if self._skip_inputs:
+            # Resuming: this document was consumed before the interruption.
+            self._check_consumed(doc)
+            self._skip_inputs -= 1
+            if self._skip_inputs == 0:
+                self._check_resume_position(doc)
+            return
         try:
             text: str | None = decode_text(doc.text)
             error: DataError | None = None
@@ -303,6 +537,56 @@ class StreamWriter:
         if len(self._pending) >= self._config.batch_docs or self._pending_chars >= _BATCH_CHARS:
             self._flush()
 
+    def _check_consumed(self, doc: Document) -> None:
+        """Compare a skipped-over document with what the interrupted write recorded.
+
+        When every written document had an id, each consumed input is checked: a
+        skipped one against ``skipped.jsonl``, a written one against the id hashes
+        kept for duplicate detection. Otherwise only the last position is checked.
+        """
+        if not self._check_every_id:
+            return
+        index = self._resume_input - self._skip_inputs
+        if index in self._skipped_ids:
+            same = doc.id == self._skipped_ids[index]
+        else:
+            same = doc.id is not None and (
+                IdHashes.digest(doc.id) == self._id_hashes.at(self._consumed_kept)
+            )
+            self._consumed_kept += 1
+        if not same:
+            raise self._order_error(
+                f"input #{index} is {doc.id!r}, the interrupted write had another "
+                "document at this position"
+            )
+
+    def _check_resume_position(self, doc: Document) -> None:
+        """The last skipped document must be the last one consumed before."""
+        expected = self._expected_last_id
+        if doc.id is None and expected is None:
+            self._issues.add(
+                codes.RESUME_ORDER_UNCHECKED,
+                "documents have no ids; make sure the generator yields them in the same "
+                "order as before",
+                category=DataQualityWarning,
+            )
+            return
+        if doc.id != expected:
+            raise self._order_error(
+                f"input #{self._n_input - 1} is {doc.id!r}, the interrupted write "
+                f"consumed {expected!r} at that position"
+            )
+
+    def _order_error(self, why: str) -> ResumeError:
+        return ResumeError(
+            codes.RESUME_INPUT_MISMATCH,
+            str(self._partial),
+            why=why,
+            fix="resume with a generator that yields the same documents in the same "
+            f"order, or delete the unfinished write (`tokbin clean {self._partial}`) "
+            "and start again",
+        )
+
     def _flush(self) -> None:
         """Process the buffered documents, in order."""
         if not self._pending:
@@ -310,9 +594,11 @@ class StreamWriter:
         entries, self._pending, self._pending_chars = self._pending, [], 0
         encoded = iter(self._encode_many([e.text for e in entries if e.text is not None]))
 
+        base = self._n_input
         kept_docs: list[Document] = []
         kept_items: list[TokenArray] = []
         kept_inputs: list[int] = []
+        skips: list[_Skip] = []
         for entry in entries:
             index = self._n_input
             self._n_input += 1
@@ -331,9 +617,11 @@ class StreamWriter:
                     kept_items.append(result)
                     kept_inputs.append(index)
             if error is not None:
-                self._skip(entry.doc, error, index)
-            self._check_skip_ratio()
-        self._write_batch(kept_docs, kept_items, kept_inputs)
+                self._note_skip(entry.doc, error, index)
+                skips.append(_Skip(index, entry.doc, error))
+            self._check_skip_ratio(len(skips))
+        batch_ids = [e.doc.id for e in entries]
+        self._write_batch(kept_docs, kept_items, kept_inputs, skips, base, batch_ids)
 
     def _encode_many(self, texts: list[str]) -> list[TokenArray | DataError]:
         """Token arrays of ``texts`` (empty strings included), or a DataError per text."""
@@ -387,66 +675,168 @@ class StreamWriter:
         raise InternalError.wrap(RuntimeError("range check disagreement"))  # pragma: no cover
 
     def _write_batch(
-        self, docs: list[Document], items: list[TokenArray], inputs: list[int]
+        self,
+        docs: list[Document],
+        items: list[TokenArray],
+        inputs: list[int],
+        skips: list[_Skip],
+        base: int,
+        batch_ids: list[str | None],
     ) -> None:
-        if not docs:
-            return
-        body_lengths = np.fromiter((a.size for a in items), dtype=np.int64, count=len(items))
-        extra = int(self._bos is not None) + int(self._eos is not None)
-        lengths = body_lengths + extra
-        ends = np.cumsum(lengths)
-        starts = ends - lengths
-        body = np.concatenate(items)
-        if extra:
-            stream = np.empty(int(ends[-1]), dtype=self._dtype)
-            is_body = np.ones(stream.size, dtype=bool)
-            if self._bos is not None:
-                stream[starts] = self._bos
-                is_body[starts] = False
-            if self._eos is not None:
-                stream[ends - 1] = self._eos
-                is_body[ends - 1] = False
-            stream[is_body] = body
-        else:
-            stream = body.astype(self._dtype, copy=False)
+        """Emit a batch and record it in the side files, checkpointing at shard ends.
 
-        self._check_sizes(docs, lengths, inputs)
-        first = self._n_items
-        # A document is split when its first and last items fall into different shards;
-        # every shard but the last holds exactly shard_items items.
+        Side file entries are written in input order, and only for inputs that are
+        complete when a shard closes, so that every checkpoint describes a prefix of
+        the input exactly.
+        """
+        side = self._open_side()
+        n = len(docs)
         size = self._shard_items
-        self._n_split_docs += int(
-            np.count_nonzero((first + starts) // size != (first + ends - 1) // size)
-        )
-        self._emit(stream)
-        self._n_docs += len(docs)
-        self._open_side().add_docs([d.id for d in docs], first + ends)
-        for doc in docs:
-            if doc.id is not None:
-                self._id_hashes.add(doc.id)
+        drop = 0
+        if n:
+            body_lengths = np.fromiter((a.size for a in items), dtype=np.int64, count=n)
+            extra = int(self._bos is not None) + int(self._eos is not None)
+            lengths = body_lengths + extra
+            ends = np.cumsum(lengths)
+            starts = ends - lengths
+            stream = self._assemble(items, starts, ends)
+            if self._drop_items:
+                drop = self._take_resumed_prefix(stream, lengths, inputs)
+        elif self._drop_items:
+            self._take_resumed_prefix(np.empty(0, self._dtype), np.empty(0, np.int64), inputs)
+        if n:
+            self._check_sizes(docs, lengths, inputs)
+            first = self._n_items - drop
+            g_ends = first + ends
+            # A document is split when its first and last items fall into different
+            # shards; every shard but the last holds exactly shard_items items.
+            split = (first + starts) // size != (first + ends - 1) // size
+            doc_ids = [d.id for d in docs]
+        else:
+            stream = np.empty(0, dtype=self._dtype)
+            first, g_ends, starts = self._n_items, np.empty(0, np.int64), np.empty(0, np.int64)
+            split = np.empty(0, dtype=bool)
+            doc_ids = []
 
-    def _skip(self, doc: Document, err: DataError, index: int) -> None:
+        recorded = 0
+        next_skip = 0
+
+        def record(k: int, consumed: int) -> None:
+            """Write side entries of kept docs [recorded, k) and skips before ``consumed``."""
+            nonlocal recorded, next_skip
+            if k > recorded:
+                side.add_docs(doc_ids[recorded:k], g_ends[recorded:k])
+                self._n_docs += k - recorded
+                self._n_split_docs += int(np.count_nonzero(split[recorded:k]))
+                for doc_id in doc_ids[recorded:k]:
+                    if doc_id is not None:
+                        self._id_hashes.add(doc_id)
+                recorded = k
+            while next_skip < len(skips) and skips[next_skip].input_index < consumed:
+                skip = skips[next_skip]
+                side.add_skipped(
+                    skip.input_index, skip.doc.id, skip.error.code.id, _reason(skip.error)
+                )
+                self._n_skipped += 1
+                next_skip += 1
+
+        def on_full(position: int) -> tuple[int, int, str | None]:
+            """A shard is full at global ``position``: record what is complete."""
+            k = int(np.searchsorted(g_ends, position, side="right"))
+            if k < n:
+                consumed, pending = inputs[k], position - int(first + starts[k])
+            else:
+                consumed, pending = inputs[-1] + 1, 0
+            record(k, consumed)
+            last = consumed - 1
+            last_id = batch_ids[last - base] if last >= base else self._prev_last_id
+            return consumed, pending, last_id
+
+        self._emit(stream[drop:], on_full)
+        record(n, base + len(batch_ids))
+        self._prev_last_id = batch_ids[-1]
+
+    def _assemble(
+        self,
+        items: list[TokenArray],
+        starts: npt.NDArray[np.int64],
+        ends: npt.NDArray[np.int64],
+    ) -> TokenArray:
+        """Concatenate document bodies, inserting BOS and EOS where configured."""
+        body = np.concatenate(items)
+        if self._bos is None and self._eos is None:
+            return body.astype(self._dtype, copy=False)
+        stream = np.empty(int(ends[-1]), dtype=self._dtype)
+        is_body = np.ones(stream.size, dtype=bool)
+        if self._bos is not None:
+            stream[starts] = self._bos
+            is_body[starts] = False
+        if self._eos is not None:
+            stream[ends - 1] = self._eos
+            is_body[ends - 1] = False
+        stream[is_body] = body
+        return stream
+
+    def _take_resumed_prefix(
+        self, stream: TokenArray, lengths: npt.NDArray[np.int64], inputs: list[int]
+    ) -> int:
+        """The first document after resume straddled the last shard boundary.
+
+        Its first items are already in closed shards: check they are the same items
+        (this also verifies the document order), and do not write them again.
+        """
+        drop, self._drop_items = self._drop_items, 0
+        if not inputs or inputs[0] != self._resume_input or int(lengths[0]) <= drop:
+            raise self._order_error(
+                f"input #{self._resume_input} continued into the next shard before the "
+                "interruption, but now it is skipped or shorter"
+            )
+        if not np.array_equal(stream[:drop], self._tail(drop)):
+            raise self._order_error(
+                f"the start of input #{self._resume_input} differs from the items already "
+                "written for it"
+            )
+        return drop
+
+    def _tail(self, n: int) -> TokenArray:
+        """The last ``n`` items of the closed shards."""
+        partial = self._open_partial()
+        parts: list[TokenArray] = []
+        for info in reversed(self._closed_shards):
+            take = min(n, info.n_items)
+            parts.append(
+                np.fromfile(
+                    partial / info.name,
+                    dtype=self._dtype,
+                    count=take,
+                    offset=(info.n_items - take) * self._dtype.itemsize,
+                )
+            )
+            n -= take
+            if n == 0:
+                break
+        return np.concatenate(parts[::-1])
+
+    def _note_skip(self, doc: Document, err: DataError, index: int) -> None:
         if self._policy.on_data_error == "raise":
             raise err
-        self._n_skipped += 1
-        reason = f"{err.detail}: {err.why}" if err.detail else err.why
-        self._open_side().add_skipped(index, doc.id, err.code.id, reason)
         self._issues.add(
             err.code,
-            f"{_where(doc, index)} ({reason}); skipped, "
+            f"{_where(doc, index)} ({_reason(err)}); skipped, "
             f"see {naming.skipped_name(self._config.split)}",
             category=DataQualityWarning,
         )
 
-    def _check_skip_ratio(self) -> None:
+    def _check_skip_ratio(self, unrecorded: int) -> None:
         policy = self._policy
-        if self._n_input < policy.min_docs_for_ratio or self._n_skipped == 0:
+        skipped = self._n_skipped + unrecorded
+        if self._n_input < policy.min_docs_for_ratio or skipped == 0:
             return
-        ratio = self._n_skipped / self._n_input
+        ratio = skipped / self._n_input
         if ratio > policy.max_skip_ratio:
             raise ContractError(
                 codes.TOO_MANY_SKIPPED,
-                f"{self._n_skipped} of {self._n_input}",
+                f"{skipped} of {self._n_input}",
                 why=f"{ratio:.1%} of documents were skipped, above the limit of "
                 f"{policy.max_skip_ratio:.1%}; a systematically broken input must not "
                 "produce a dataset made of fragments",
@@ -494,10 +884,13 @@ class StreamWriter:
                 count=report.count,
             )
 
-    def _emit(self, items: TokenArray) -> None:
+    def _emit(
+        self, items: TokenArray, on_full: Callable[[int], tuple[int, int, str | None]]
+    ) -> None:
         pos, total = 0, items.size
         while pos < total:
             if self._shard is None:
+                self._check_space()
                 self._shard = ShardFile(
                     self._open_partial(),
                     self._config.split,
@@ -509,7 +902,46 @@ class StreamWriter:
             pos += take
             self._n_items += take
             if self._shard.n_items == self._shard_items:
+                consumed, pending, last_id = on_full(self._n_items)
                 self._close_shard()
+                self._write_checkpoint(consumed=consumed, pending=pending, last_id=last_id)
+
+    def _check_space(self) -> None:
+        """At least two shards of free space before a new shard starts (spec 7.4)."""
+        partial = self._open_partial()
+        need = 2 * self._config.shard_bytes
+        free = _fs.free_bytes(partial)
+        if free < need:
+            raise ConfigError(
+                codes.DISK_SPACE_LOW,
+                str(partial),
+                why=f"{free:,} bytes are free, a new shard needs at least two shards "
+                f"({need:,} bytes) of free space",
+                fix="free disk space and continue the write with resume=True, or write "
+                "to another disk",
+            )
+
+    def _write_checkpoint(self, *, consumed: int, pending: int, last_id: str | None) -> None:
+        """Record the state after a closed shard (the shard is already durable)."""
+        lengths = self._open_side().lengths()
+        checkpoint = Checkpoint(
+            schema_version=SCHEMA_VERSION,
+            split=self._config.split,
+            dtype=self._dtype.name,
+            config_hash=self._config_hash,
+            tokenizer_hash=self._tok.fingerprint(),
+            n_input_consumed=consumed,
+            pending_doc_items=pending,
+            last_input_id=last_id,
+            n_items=self._n_items,
+            n_docs=self._n_docs,
+            n_skipped=self._n_skipped,
+            n_split_docs=self._n_split_docs,
+            closed_shards=tuple(self._closed_shards),
+            side_files=lengths,
+            updated_at=utc_timestamp(),
+        )
+        write_checkpoint(self._open_partial(), checkpoint)
 
     def _close_shard(self) -> None:
         if self._shard is not None:
@@ -562,7 +994,24 @@ class StreamWriter:
             return self._result
         if self._partial is None:
             self.open()
+        try:
+            return self._finish()
+        except BaseException:
+            self.abort()
+            raise
+
+    def _finish(self) -> WriteResult:
         self._flush()
+        if self._skip_inputs:
+            raise self._order_error(
+                f"the input ended after {self._n_input - self._skip_inputs} documents, "
+                f"but the interrupted write had already consumed {self._n_input}"
+            )
+        if self._drop_items:
+            raise self._order_error(
+                f"the input ended before input #{self._resume_input}, which the "
+                "interrupted write had started"
+            )
         partial, side = self._open_partial(), self._open_side()
         if self._shard is not None:
             if self._shard.n_items:
@@ -604,7 +1053,9 @@ class StreamWriter:
             meta,
             replace_split=split if self._existing is not None else None,
         )
-        self._partial = None
+        if self._lock is not None:
+            self._lock.release()  # the file went away with the publication
+        self._partial = self._lock = None
 
         self._issues.set_count(
             codes.DOCS_SPLIT_ACROSS_SHARDS,
@@ -622,7 +1073,10 @@ class StreamWriter:
         return self._result
 
     def abort(self) -> None:
-        """Drop the open shard and leave the partial directory as it is."""
+        """Drop the open shard and unwritten batch, release the lock.
+
+        The partial directory stays with its last checkpoint, ready for ``resume=True``.
+        """
         self._pending, self._pending_chars = [], 0
         if self._shard is not None:
             self._shard.discard()
@@ -632,3 +1086,7 @@ class StreamWriter:
             self._side = None
         if self._partial is not None:
             discard_open_shards(self._partial)
+        if self._lock is not None:
+            self._lock.release()
+            self._lock = None
+        self._partial = None

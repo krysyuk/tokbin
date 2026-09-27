@@ -11,7 +11,9 @@ unchanged:
 - ``OSError`` (disk full, permission denied, missing path): a problem of the
   environment with its own errno and path, not a library bug;
 - exceptions raised by user code that tokbin calls, such as the document generator
-  (marked with :func:`mark_user_error`): they belong to the user.
+  (marked with :func:`mark_user_error`): they belong to the user;
+- ``TypeError`` from calling a public function with wrong arguments: a mistake of the
+  caller, reported by Python as usual.
 """
 
 from __future__ import annotations
@@ -42,6 +44,15 @@ def is_user_error(exc: BaseException) -> bool:
     return bool(getattr(exc, _USER_ERROR_ATTR, False))
 
 
+def _is_call_error(exc: Exception) -> bool:
+    """A ``TypeError`` raised by the call itself: wrong arguments, a caller's mistake.
+
+    Its traceback ends in the wrapper frame, because the function body never ran.
+    """
+    tb = exc.__traceback__
+    return isinstance(exc, TypeError) and tb is not None and tb.tb_next is None
+
+
 def public_api(func: Callable[P, R]) -> Callable[P, R]:
     """Wrap a public API function.
 
@@ -61,7 +72,7 @@ def public_api(func: Callable[P, R]) -> Callable[P, R]:
         except (Warning, OSError):
             raise
         except Exception as exc:
-            if is_user_error(exc):
+            if is_user_error(exc) or _is_call_error(exc):
                 raise
             raise InternalError.wrap(exc, where=where) from exc
 

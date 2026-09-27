@@ -71,3 +71,15 @@ def read_ids(source: Path, split: str = "train") -> list[str | None]:
 def read_skipped(source: Path, split: str = "train") -> list[dict[str, Any]]:
     path = source / f"{split}-skipped.jsonl"
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+
+
+#: The frozen schema 1 dataset (see tests/fixtures/make_fixtures.py).
+FIXTURE = Path(__file__).resolve().parent / "fixtures" / "schema_v1" / "tiny"
+
+
+def copy_fixture(dst: Path) -> Path:
+    """A private copy of the frozen fixture that a test may damage."""
+    import shutil
+
+    shutil.copytree(FIXTURE, dst)
+    return dst

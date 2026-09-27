@@ -79,3 +79,21 @@ def test_wraps_metadata() -> None:
 
     assert documented.__name__ == "documented"
     assert documented.__doc__ == "Doc."
+
+
+def test_wrong_arguments_are_the_callers_mistake() -> None:
+    @public_api
+    def f(x: int) -> int:
+        return x
+
+    with pytest.raises(TypeError, match="unexpected keyword"):
+        f(y=1)  # type: ignore[call-arg]
+
+
+def test_type_error_inside_the_body_is_internal() -> None:
+    @public_api
+    def f() -> None:
+        len(5)  # type: ignore[arg-type]
+
+    with pytest.raises(InternalError):
+        f()

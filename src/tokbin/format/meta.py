@@ -192,12 +192,12 @@ class Meta:
         }
 
     @classmethod
-    def from_dict(cls, data: object, where: str) -> Meta:
+    def from_dict(cls, data: object, where: str, *, warn_outdated: bool = True) -> Meta:
         """Parse and validate. ``where`` names the file for messages."""
         f = Fields(data, where)
         # The schema version comes first: a newer schema must produce
         # SchemaVersionError, not a confusing error about some field.
-        check_schema(f.get_int("schema_version", minimum=1), where)
+        check_schema(f.get_int("schema_version", minimum=1), where, warn_outdated=warn_outdated)
 
         _require_supported(f, "modality", "text", "only text sources are supported")
         _require_supported(f, "packing", "stream", 'packing "record" is planned for 2.0')
@@ -290,10 +290,10 @@ def _check_consistency(meta: Meta, where: str) -> None:
             )
 
 
-def read_meta(root: Path) -> Meta:
+def read_meta(root: Path, *, warn_outdated: bool = True) -> Meta:
     """Read and validate ``meta.json`` of the source at ``root``."""
     path = root / naming.META_JSON
-    return Meta.from_dict(read_json_bounded(path), where=str(path))
+    return Meta.from_dict(read_json_bounded(path), where=str(path), warn_outdated=warn_outdated)
 
 
 def write_meta(root: Path, meta: Meta) -> None:

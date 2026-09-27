@@ -30,6 +30,7 @@ def test_checkpoint_roundtrip(tmp_path: Path, checkpoint_dict: dict[str, Any]) -
         ("pending_doc_items", -1),
         ("updated_at", "yesterday"),
         ("last_input_id", 5),
+        ("n_split_docs", -1),
     ],
 )
 def test_checkpoint_invalid_field(checkpoint_dict: dict[str, Any], key: str, value: object) -> None:
@@ -47,6 +48,7 @@ def test_checkpoint_invalid_field(checkpoint_dict: dict[str, Any], key: str, val
         lambda d: d.update(pending_doc_items=101),
         lambda d: d["closed_shards"][0].update(name="train-00001.bin"),
         lambda d: d["closed_shards"][0].update(n_bytes=100),
+        lambda d: d.update(n_split_docs=9),
     ],
 )
 def test_checkpoint_inconsistent(checkpoint_dict: dict[str, Any], mutate: Any) -> None:

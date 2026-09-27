@@ -87,10 +87,14 @@ TOKENIZER_FILE_INVALID = _register("TB-C212", "Tokenizer file cannot be loaded")
 TOKENIZER_LIMITS_DISABLED = _register("TB-C213", "Tokenizer truncation and padding were disabled")
 WRITER_NOT_FINISHED = _register("TB-C214", "Writer is not finished")
 SPECIAL_TOKENS_DETECTED = _register("TB-C215", "Special tokens were detected automatically")
+DISK_SPACE_LOW = _register("TB-C216", "Not enough free disk space for the next shard")
 SPLIT_NOT_FOUND = _register("TB-C301", "Split is not in the source")
 OUT_OF_RANGE = _register("TB-C302", "Position is out of range")
 RNG_REQUIRED = _register("TB-C303", "A numpy random Generator is required")
 WINDOW_TOO_LARGE = _register("TB-C304", "Window is larger than the split")
+SOURCE_NOT_FOUND = _register("TB-C305", "Dataset path not found")
+NOT_A_SOURCE = _register("TB-C306", "Path is not a tokbin source")
+NOT_A_CORPUS = _register("TB-C307", "Path is a source, not a corpus")
 
 # --- K: contract --------------------------------------------------------------------
 
@@ -107,6 +111,7 @@ TOKEN_ID_OUT_OF_RANGE = _register("TB-D202", "Token id is out of range for the d
 DOCUMENT_EMPTY = _register("TB-D203", "Document is empty")
 TOKENIZER_FAILED = _register("TB-D204", "Tokenizer failed on the document")
 DUPLICATE_DOC_ID = _register("TB-D205", "Duplicate document id")
+DOCS_WERE_SKIPPED = _register("TB-D301", "Documents were skipped when the source was written")
 
 # --- S: sharding --------------------------------------------------------------------
 
@@ -121,15 +126,23 @@ SHARD_CORRUPT = _register("TB-I302", "Shard is corrupted")
 SHARD_WRONG_SIZE = _register("TB-I303", "Shard has the wrong size")
 INDEX_MISSING = _register("TB-I304", "Index file is missing")
 INDEX_CORRUPT = _register("TB-I305", "Index file is corrupted")
+TOKENIZER_COPY_MISSING = _register("TB-I306", "Tokenizer copy is missing")
 
 # --- M: compatibility ---------------------------------------------------------------
 
 TOKENIZER_MISMATCH = _register("TB-M201", "Existing source uses a different tokenizer")
 DTYPE_MISMATCH = _register("TB-M202", "Existing source uses a different dtype")
+TOKENIZERS_DIFFER = _register("TB-M301", "Sources of the corpus use different tokenizers")
 
 # --- R: resume ----------------------------------------------------------------------
 
 PARTIAL_EXISTS = _register("TB-R201", "An unfinished write already exists")
+WRITER_ACTIVE = _register("TB-R202", "Another process is writing this source")
+RESUME_INPUT_MISMATCH = _register("TB-R203", "Documents differ from the interrupted write")
+RESUME_ORDER_UNCHECKED = _register("TB-R204", "Document order cannot be checked on resume")
+RESUME_SETTINGS_MISMATCH = _register("TB-R205", "Settings differ from the interrupted write")
+PARTIAL_DAMAGED = _register("TB-R206", "Unfinished write cannot be resumed")
+RESUMED = _register("TB-R207", "Write resumed from a checkpoint")
 
 # --- F: format ----------------------------------------------------------------------
 
@@ -142,6 +155,8 @@ PATH_ESCAPES_ROOT = _register("TB-F106", "Path escapes the dataset root")
 SCHEMA_TOO_NEW = _register("TB-F107", "Format schema is newer than this tokbin supports")
 SCHEMA_TOO_OLD = _register("TB-F108", "Format schema is no longer supported")
 FEATURE_UNSUPPORTED = _register("TB-F109", "Feature is not supported by this tokbin version")
+MIX_SOURCE_MISSING = _register("TB-F110", "mix.json refers to a missing source")
+SCHEMA_OUTDATED = _register("TB-F111", "Format schema is outdated")
 
 # --- P: dependencies ----------------------------------------------------------------
 

@@ -23,10 +23,11 @@ SUPPORTED_SCHEMAS: Final = frozenset({1})
 SourceKind = Literal["single"]
 
 
-def check_schema(version: int, where: str) -> None:
+def check_schema(version: int, where: str, *, warn_outdated: bool = True) -> None:
     """Accept a supported schema; warn about an outdated one, refuse the rest.
 
-    ``where`` names the file for messages.
+    ``where`` names the file for messages. Inspection passes ``warn_outdated=False``:
+    it reports an outdated schema as a status instead of a warning.
     """
     if version > SCHEMA_VERSION:
         raise SchemaVersionError(
@@ -42,7 +43,7 @@ def check_schema(version: int, where: str) -> None:
             why=f"supported schema versions are {sorted(SUPPORTED_SCHEMAS)}",
             fix="convert the dataset with an older tokbin release (`tokbin migrate`)",
         )
-    if version < SCHEMA_VERSION:
+    if version < SCHEMA_VERSION and warn_outdated:
         warnings.warn(
             f"{where} uses format schema {version}; the current schema is {SCHEMA_VERSION}. "
             "Reading still works; convert the dataset with `tokbin migrate`.",

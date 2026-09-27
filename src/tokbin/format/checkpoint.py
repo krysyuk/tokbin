@@ -82,7 +82,8 @@ class Checkpoint:
     n_items: int
     n_docs: int
     n_skipped: int
-    has_split_docs: bool
+    #: Documents whose items continue from one shard into the next.
+    n_split_docs: int
     closed_shards: tuple[ShardInfo, ...]
     side_files: SideFileLengths
     updated_at: str
@@ -100,7 +101,7 @@ class Checkpoint:
             "n_items": self.n_items,
             "n_docs": self.n_docs,
             "n_skipped": self.n_skipped,
-            "has_split_docs": self.has_split_docs,
+            "n_split_docs": self.n_split_docs,
             "closed_shards": [s.to_dict() for s in self.closed_shards],
             "side_files": self.side_files.to_dict(),
             "updated_at": self.updated_at,
@@ -143,7 +144,7 @@ class Checkpoint:
             n_items=f.get_int("n_items", minimum=0),
             n_docs=f.get_int("n_docs", minimum=0),
             n_skipped=f.get_int("n_skipped", minimum=0),
-            has_split_docs=f.get_bool("has_split_docs"),
+            n_split_docs=f.get_int("n_split_docs", minimum=0),
             closed_shards=shards,
             side_files=SideFileLengths.from_fields(f.get_object("side_files")),
             updated_at=updated_at,
@@ -175,6 +176,8 @@ def _check_consistency(cp: Checkpoint, where: str) -> None:
         raise fail("written and skipped documents do not add up to n_input_consumed")
     if cp.pending_doc_items > cp.n_items:
         raise fail("pending_doc_items exceeds the items in closed shards")
+    if cp.n_split_docs > cp.n_docs:
+        raise fail("n_split_docs exceeds n_docs")
 
 
 def read_checkpoint(partial_root: Path) -> Checkpoint:

@@ -24,7 +24,6 @@ def test_cli_version(
     capsys: pytest.CaptureFixture[str],
     no_side_effects: Callable[[], AbstractContextManager[None]],
 ) -> None:
-    with no_side_effects(), pytest.raises(SystemExit) as info:
-        main(["--version"])
-    assert info.value.code == 0
+    with no_side_effects():
+        assert main(["--version"]) == 0
     assert capsys.readouterr().out.strip() == f"tokbin {tokbin.__version__}"
