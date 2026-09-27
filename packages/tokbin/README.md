@@ -2,7 +2,7 @@
 
 Meta-package: installs `tokbin-core` and `tokenizers`.
 
-```
+```bash
 pip install tokbin          # full: write and read
 pip install tokbin-core     # lightweight: read, verify, unpack
 ```

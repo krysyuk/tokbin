@@ -7,7 +7,7 @@ never changes its meaning and is never reused, even after the error is removed.
 
 An error message has three parts: what happened, why, and what to do:
 
-```
+```bash
 [TB-I301] Shard is missing: corpus/web/train-00003.bin
   where: tokbin.read.source.read_source
   cause: meta.json lists 13 shards for 'train'; this one is not on disk

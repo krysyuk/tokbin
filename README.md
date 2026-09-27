@@ -8,7 +8,7 @@ by weight, pack datasets for transfer and verify their integrity.
 
 ## Installation
 
-```
+```bash
 pip install tokbin          # full: write and read
 pip install tokbin-core     # lightweight: read, verify, unpack
 ```
@@ -34,7 +34,7 @@ of work is lost; the result is identical to an uninterrupted write.
 ```python
 from tokbin import Mixture
 
-mix = Mixture.from_config("corpus")                 # weights from corpus/mix.json
+mix = Mixture.from_config("corpus")    # weights from corpus/mix.json
 x = mix.batch(batch_size=32, block_size=1024, rng=np.random.default_rng(0))
 ```
 
@@ -43,16 +43,16 @@ For torch, `tokbin.adapters.torch` has `WindowDataset` and `MixtureDataset`
 
 ## Command line
 
-```
-tokbin ls corpus              # sources, states and sizes
-tokbin info corpus            # tokens, tokenizer, mixture, remarks
-tokbin info corpus/web        # dtype, splits, special tokens of one source
-tokbin status corpus/web      # write state, unfinished writes included
-tokbin verify corpus/web      # sha256 of every shard and all index files
-tokbin clean corpus/web       # remove an unfinished write (corpus/web.partial)
-tokbin pack corpus/web --tar  # corpus/web.tbpack.tar: compressed, with sha256 manifest
-tokbin unpack web.tbpack.tar --into corpus   # unpack, verify, publish
-tokbin doctor                 # version, mode, optional packages
+```bash
+tokbin ls corpus                            # sources, states and sizes
+tokbin info corpus                          # tokens, tokenizer, mixture, remarks
+tokbin info corpus/web                      # dtype, splits, special tokens of one source
+tokbin status corpus/web                    # write state, unfinished writes included
+tokbin verify corpus/web                    # sha256 of every shard and all index files
+tokbin clean corpus/web                     # remove an unfinished write (corpus/web.partial)
+tokbin pack corpus/web --tar                # corpus/web.tbpack.tar: compressed, with sha256 manifest
+tokbin unpack web.tbpack.tar --into corpus  # unpack, verify, publish
+tokbin doctor                               # version, mode, optional packages
 ```
 
 Every command accepts `--json` (machine-readable output), `--no-color` and `--strict`
@@ -62,7 +62,7 @@ listed in [docs/errors.md](docs/errors.md).
 
 ## Development
 
-```
+```bash
 uv sync --all-packages
 git config core.hooksPath scripts/hooks   # enable the pre-commit quality gate
 ```
