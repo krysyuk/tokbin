@@ -37,7 +37,9 @@ from tokbin.ops.inspect import (
     inspect_corpus,
     inspect_source,
 )
+from tokbin.ops.pack import PackResult, UnpackResult, pack_source, unpack_pack
 from tokbin.ops.verify import ShardCheck, VerifyProgress, VerifyReport, verify_source
+from tokbin.read.mixture import Mixture
 from tokbin.read.source import Source, read_source
 from tokbin.write.config import ErrorPolicy, WriterConfig
 from tokbin.write.documents import Segment
@@ -61,7 +63,9 @@ __all__ = [
     "IntegrityError",
     "InternalError",
     "Issue",
+    "Mixture",
     "OutOfRangeError",
+    "PackResult",
     "PartialInfo",
     "Problem",
     "ResumeError",
@@ -75,6 +79,7 @@ __all__ = [
     "StreamWriter",
     "TokbinError",
     "TokbinWarning",
+    "UnpackResult",
     "UnsupportedFeatureError",
     "VerifyProgress",
     "VerifyReport",
@@ -86,7 +91,9 @@ __all__ = [
     "doctor",
     "inspect_corpus",
     "inspect_source",
+    "pack_source",
     "read_source",
+    "unpack_pack",
     "verify_source",
 ]
 

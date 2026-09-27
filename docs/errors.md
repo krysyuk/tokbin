@@ -47,6 +47,9 @@ Classes: `ConfigError`.
 | `TB-C305` | Dataset path not found |
 | `TB-C306` | Path is not a tokbin source |
 | `TB-C307` | Path is a source, not a corpus |
+| `TB-C308` | Output already exists |
+| `TB-C309` | Source is not finished |
+| `TB-C310` | Invalid mixture weights |
 
 ## K: Contract
 
@@ -90,6 +93,8 @@ Classes: `FormatError`, `SchemaVersionError`, `UnsupportedFeatureError`.
 | `TB-F109` | Feature is not supported by this tokbin version |
 | `TB-F110` | mix.json refers to a missing source |
 | `TB-F111` | Format schema is outdated |
+| `TB-F112` | Archive contains an unsafe entry |
+| `TB-F113` | Path is not a tokbin pack |
 
 ## I: Integrity
 
@@ -103,6 +108,9 @@ Classes: `IntegrityError`.
 | `TB-I304` | Index file is missing |
 | `TB-I305` | Index file is corrupted |
 | `TB-I306` | Tokenizer copy is missing |
+| `TB-I307` | Packed file is corrupted |
+| `TB-I308` | Packed file expands beyond its declared size |
+| `TB-I309` | Packed file is missing |
 
 ## M: Compatibility
 
@@ -136,6 +144,7 @@ Classes: `DependencyError`.
 |---|---|
 | `TB-P001` | Required package is not installed |
 | `TB-P002` | Writing is not available in tokbin-core |
+| `TB-P003` | zstd is not available; lzma is used instead |
 
 ## S: Sharding
 

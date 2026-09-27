@@ -40,6 +40,7 @@ __all__ = [
     "partial_exists_error",
     "partial_path",
     "publish",
+    "swap_in",
 ]
 
 _INT64 = struct.Struct("<q")
@@ -275,15 +276,24 @@ def publish(partial: Path, target: Path, meta: Meta, *, replace_split: str | Non
     _drop_work_files(partial)
     _fs.fsync_dir(partial)
 
+    swap_in(partial, target)
+
+
+def swap_in(ready: Path, target: Path) -> None:
+    """Rename the finished directory ``ready`` to ``target``, replacing an existing one.
+
+    An existing target is moved aside first and deleted only after the new one is in
+    place; if the process dies in between, ``tokbin clean`` removes the old copy.
+    """
     parent = target.parent
     if target.exists():
         old = target.with_name(f".{target.name}.old-{os.getpid()}")
         target.rename(old)
-        partial.rename(target)
+        ready.rename(target)
         _fs.fsync_dir(parent)
         shutil.rmtree(old)
     else:
-        partial.rename(target)
+        ready.rename(target)
         _fs.fsync_dir(parent)
 
 

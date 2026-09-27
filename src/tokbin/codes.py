@@ -95,6 +95,9 @@ WINDOW_TOO_LARGE = _register("TB-C304", "Window is larger than the split")
 SOURCE_NOT_FOUND = _register("TB-C305", "Dataset path not found")
 NOT_A_SOURCE = _register("TB-C306", "Path is not a tokbin source")
 NOT_A_CORPUS = _register("TB-C307", "Path is a source, not a corpus")
+OUTPUT_EXISTS = _register("TB-C308", "Output already exists")
+SOURCE_NOT_FINISHED = _register("TB-C309", "Source is not finished")
+MIX_WEIGHTS_INVALID = _register("TB-C310", "Invalid mixture weights")
 
 # --- K: contract --------------------------------------------------------------------
 
@@ -127,6 +130,9 @@ SHARD_WRONG_SIZE = _register("TB-I303", "Shard has the wrong size")
 INDEX_MISSING = _register("TB-I304", "Index file is missing")
 INDEX_CORRUPT = _register("TB-I305", "Index file is corrupted")
 TOKENIZER_COPY_MISSING = _register("TB-I306", "Tokenizer copy is missing")
+PACKED_FILE_CORRUPT = _register("TB-I307", "Packed file is corrupted")
+PACKED_FILE_TOO_LARGE = _register("TB-I308", "Packed file expands beyond its declared size")
+PACKED_FILE_MISSING = _register("TB-I309", "Packed file is missing")
 
 # --- M: compatibility ---------------------------------------------------------------
 
@@ -157,11 +163,14 @@ SCHEMA_TOO_OLD = _register("TB-F108", "Format schema is no longer supported")
 FEATURE_UNSUPPORTED = _register("TB-F109", "Feature is not supported by this tokbin version")
 MIX_SOURCE_MISSING = _register("TB-F110", "mix.json refers to a missing source")
 SCHEMA_OUTDATED = _register("TB-F111", "Format schema is outdated")
+ARCHIVE_ENTRY_UNSAFE = _register("TB-F112", "Archive contains an unsafe entry")
+NOT_A_PACK = _register("TB-F113", "Path is not a tokbin pack")
 
 # --- P: dependencies ----------------------------------------------------------------
 
 DEPENDENCY_MISSING = _register("TB-P001", "Required package is not installed")
 WRITE_UNAVAILABLE = _register("TB-P002", "Writing is not available in tokbin-core")
+SLOW_COMPRESSION = _register("TB-P003", "zstd is not available; lzma is used instead")
 
 # --- X: internal --------------------------------------------------------------------
 

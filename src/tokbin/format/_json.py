@@ -12,7 +12,13 @@ from pathlib import Path
 from tokbin import _fs, codes
 from tokbin.errors import FormatError
 
-__all__ = ["MAX_METADATA_BYTES", "canonical_dumps", "read_json_bounded", "write_json_atomic"]
+__all__ = [
+    "MAX_METADATA_BYTES",
+    "canonical_dumps",
+    "parse_json_bounded",
+    "read_json_bounded",
+    "write_json_atomic",
+]
 
 #: Upper bound for any metadata file (spec 9.3).
 MAX_METADATA_BYTES = 16 * 1024**2
@@ -54,10 +60,18 @@ def read_json_bounded(path: Path, *, limit: int = MAX_METADATA_BYTES) -> object:
             why="the file does not exist",
             fix="check the path; an incomplete or foreign directory is not a tokbin dataset",
         ) from None
+    return parse_json_bounded(raw, str(path), limit=limit)
+
+
+def parse_json_bounded(raw: bytes, where: str, *, limit: int = MAX_METADATA_BYTES) -> object:
+    """Parse a metadata document already read into memory (for example from an archive).
+
+    ``raw`` may be one byte longer than ``limit``, which is how oversized input is seen.
+    """
     if len(raw) > limit:
         raise FormatError(
             codes.METADATA_TOO_LARGE,
-            str(path),
+            where,
             why=f"the file is larger than the {limit // 1024**2} MB limit for metadata",
             fix=_CORRUPT_FIX,
         )
@@ -71,7 +85,7 @@ def read_json_bounded(path: Path, *, limit: int = MAX_METADATA_BYTES) -> object:
     except (UnicodeDecodeError, ValueError) as exc:
         raise FormatError(
             codes.METADATA_NOT_JSON,
-            str(path),
+            where,
             why=str(exc),
             fix=_CORRUPT_FIX,
         ) from exc

@@ -74,6 +74,23 @@ schema_version: 1
 - `clean_source(path)`, `Dataset.clean(name)` and `tokbin clean <path>` remove an
   unfinished write (never one a live process is writing). `status` shows who is
   writing a source and how to resume or discard an unfinished write.
+- Packing for transfer: `pack_source(path)` / `tokbin pack` compress every file of a
+  complete source separately into `<name>.tbpack/` (or one reproducible
+  `<name>.tbpack.tar` with `--tar`) with a manifest of sizes and sha256 of the original
+  and compressed data. zstd through `compression.zstd` (Python 3.14+) or `zstandard`
+  (the `zstd` extra), otherwise lzma with a `TB-P003` warning. A shard that does not
+  match its sha256 is never packed.
+- `unpack_pack(pack)` / `tokbin unpack` decompress into `<name>.partial/`, check the
+  size and sha256 of every compressed and decompressed file, check the result against
+  its `meta.json` and only then publish it. Decompression never writes more than the
+  declared size (decompression bombs); archive entries with absolute paths, `..`,
+  links or devices are refused on every Python version.
+- `Mixture.from_config(root, weights=None)`: weighted sampling of windows from several
+  sources (`mix.json` or explicit weights), `batch(batch_size, block_size, rng)`;
+  sources with different tokenizers are refused (`TB-M301`).
+- `tokbin.adapters.torch`: `WindowDataset` and `MixtureDataset`, map-style datasets
+  for `DataLoader` returning `int64` tensors; importing the module does not import
+  torch.
 
 ### Fixed
 

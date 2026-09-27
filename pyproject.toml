@@ -52,6 +52,8 @@ dev = [
     "mypy>=1.18",
     "pytest>=8.4",
     "ruff>=0.16.2",
+    # The zstd backend for Python < 3.14 is tested too; lzma is tested by forcing it.
+    "zstandard>=0.22",
 ]
 # Everything the full mode needs. CI for the core mode syncs without this group.
 full = [

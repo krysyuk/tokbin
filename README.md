@@ -29,6 +29,18 @@ ds.write("web", docs(), tokenizer, resume=True)
 `docs()` must yield the same documents in the same order as before. At most one shard
 of work is lost; the result is identical to an uninterrupted write.
 
+## Mixtures
+
+```python
+from tokbin import Mixture
+
+mix = Mixture.from_config("corpus")                 # weights from corpus/mix.json
+x = mix.batch(batch_size=32, block_size=1024, rng=np.random.default_rng(0))
+```
+
+For torch, `tokbin.adapters.torch` has `WindowDataset` and `MixtureDataset`
+(`pip install 'tokbin-core[torch]'`).
+
 ## Command line
 
 ```
@@ -38,6 +50,8 @@ tokbin info corpus/web        # dtype, splits, special tokens of one source
 tokbin status corpus/web      # write state, unfinished writes included
 tokbin verify corpus/web      # sha256 of every shard and all index files
 tokbin clean corpus/web       # remove an unfinished write (corpus/web.partial)
+tokbin pack corpus/web --tar  # corpus/web.tbpack.tar: compressed, with sha256 manifest
+tokbin unpack web.tbpack.tar --into corpus   # unpack, verify, publish
 tokbin doctor                 # version, mode, optional packages
 ```
 
