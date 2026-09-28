@@ -1,0 +1,122 @@
+{
+  "experiment": "pack",
+  "env": {
+    "cpu": "Apple M4 Pro",
+    "cores": 12,
+    "memory_bytes": 25769803776,
+    "os": "Darwin 25.6.0",
+    "machine": "arm64",
+    "python": "3.12.9",
+    "numpy": "2.5.1",
+    "tokenizers": "0.23.1",
+    "tokbin": "0.1.0.dev0",
+    "commit": "42ffc5e",
+    "dirty": false,
+    "rayon_threads": null,
+    "date": "2026-09-28 19:33:39"
+  },
+  "sources": {
+    "deepseek": "benchmarks/.work/full/deepseek/src",
+    "bpe12k": "benchmarks/.work/full/bpe12k/src"
+  },
+  "wall_s": 84.55476054199971,
+  "data": {
+    "sources": {
+      "deepseek": [
+        {
+          "method": "zstd",
+          "level": 1,
+          "bytes": 2302165966,
+          "packed": 739944305,
+          "ratio": 0.3214122334914233,
+          "pack_s": 6.098134125000797,
+          "unpack_s": 2.7974158749566413
+        },
+        {
+          "method": "zstd",
+          "level": 3,
+          "bytes": 2302165966,
+          "packed": 646287727,
+          "ratio": 0.28073029336061345,
+          "pack_s": 8.160728125018068,
+          "unpack_s": 2.865813624986913
+        },
+        {
+          "method": "zstd",
+          "level": 9,
+          "bytes": 2302165966,
+          "packed": 543388493,
+          "ratio": 0.23603358794506651,
+          "pack_s": 27.523932500043884,
+          "unpack_s": 2.5294912079698406
+        },
+        {
+          "method": "zstd",
+          "level": 19,
+          "skipped": true
+        },
+        {
+          "method": "lzma",
+          "level": 1,
+          "skipped": true
+        },
+        {
+          "method": "lzma",
+          "level": 3,
+          "skipped": true
+        }
+      ],
+      "bpe12k": [
+        {
+          "method": "zstd",
+          "level": 1,
+          "bytes": 1069574558,
+          "packed": 629371230,
+          "ratio": 0.588431377029819,
+          "pack_s": 2.422590833972208,
+          "unpack_s": 1.4024150000186637
+        },
+        {
+          "method": "zstd",
+          "level": 3,
+          "bytes": 1069574558,
+          "packed": 546538498,
+          "ratio": 0.510986816124323,
+          "pack_s": 4.419701083039399,
+          "unpack_s": 1.4867519999970682
+        },
+        {
+          "method": "zstd",
+          "level": 9,
+          "bytes": 1069574558,
+          "packed": 457756698,
+          "ratio": 0.4279801670450729,
+          "pack_s": 14.622343000024557,
+          "unpack_s": 1.5211293749744073
+        },
+        {
+          "method": "zstd",
+          "level": 19,
+          "skipped": true
+        },
+        {
+          "method": "lzma",
+          "level": 1,
+          "skipped": true
+        },
+        {
+          "method": "lzma",
+          "level": 3,
+          "skipped": true
+        }
+      ]
+    },
+    "text": {
+      "zstd-3": {
+        "bytes": 2227753162,
+        "packed": 655364417,
+        "seconds": 8.584898583998438
+      }
+    }
+  }
+}

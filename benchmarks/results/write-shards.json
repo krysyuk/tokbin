@@ -1,0 +1,115 @@
+{
+  "experiment": "shards",
+  "env": {
+    "cpu": "Apple M4 Pro",
+    "cores": 12,
+    "memory_bytes": 25769803776,
+    "os": "Darwin 25.6.0",
+    "machine": "arm64",
+    "python": "3.12.9",
+    "numpy": "2.5.1",
+    "tokenizers": "0.23.1",
+    "tokbin": "0.1.0.dev0",
+    "commit": "42ffc5e",
+    "dirty": false,
+    "rayon_threads": null,
+    "date": "2026-09-28 18:59:37"
+  },
+  "n": 200000,
+  "repeat": 3,
+  "tokenizers": {
+    "deepseek": "experiments/DeepSeek-V4.1-Flash/tokenizer.json",
+    "bpe12k": "experiments/tokenizers/bpe12k/tokenizer.json"
+  },
+  "wall_s": 31.10112725000363,
+  "data": {
+    "tokenizer": "deepseek",
+    "n_docs": 200000,
+    "rows": [
+      {
+        "shard_mib": 1,
+        "n_shards": 149,
+        "write": {
+          "best": 0.825294959009625,
+          "median": 0.8549328750232235,
+          "samples": [
+            1.0354029590380378,
+            0.8549328750232235,
+            0.825294959009625
+          ]
+        },
+        "n_tokens": 39032907
+      },
+      {
+        "shard_mib": 4,
+        "n_shards": 38,
+        "write": {
+          "best": 0.7138040420250036,
+          "median": 0.7257631249958649,
+          "samples": [
+            0.7352475419756956,
+            0.7257631249958649,
+            0.7138040420250036
+          ]
+        },
+        "n_tokens": 39032907
+      },
+      {
+        "shard_mib": 16,
+        "n_shards": 10,
+        "write": {
+          "best": 0.6817417920101434,
+          "median": 0.690829917031806,
+          "samples": [
+            0.6817417920101434,
+            0.6962601250270382,
+            0.690829917031806
+          ]
+        },
+        "n_tokens": 39032907
+      },
+      {
+        "shard_mib": 64,
+        "n_shards": 3,
+        "write": {
+          "best": 0.6672717089531943,
+          "median": 0.6704414999694563,
+          "samples": [
+            0.6672717089531943,
+            0.6704414999694563,
+            0.7037590419640765
+          ]
+        },
+        "n_tokens": 39032907
+      },
+      {
+        "shard_mib": 256,
+        "n_shards": 1,
+        "write": {
+          "best": 0.6699907919974066,
+          "median": 0.6764317919733003,
+          "samples": [
+            0.6802214169874787,
+            0.6764317919733003,
+            0.6699907919974066
+          ]
+        },
+        "n_tokens": 39032907
+      },
+      {
+        "shard_mib": 1024,
+        "n_shards": 1,
+        "write": {
+          "best": 0.6656598330009729,
+          "median": 0.6683703750022687,
+          "samples": [
+            0.6684937909594737,
+            0.6656598330009729,
+            0.6683703750022687
+          ]
+        },
+        "n_tokens": 39032907
+      }
+    ]
+  }
+}

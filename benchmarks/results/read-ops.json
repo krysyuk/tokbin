@@ -1,0 +1,25 @@
+{
+  "experiment": "ops",
+  "env": {
+    "cpu": "Apple M4 Pro",
+    "cores": 12,
+    "memory_bytes": 25769803776,
+    "os": "Darwin 25.6.0",
+    "machine": "arm64",
+    "python": "3.12.9",
+    "numpy": "2.5.1",
+    "tokenizers": "0.23.1",
+    "tokbin": "0.1.0.dev0",
+    "commit": "42ffc5e",
+    "dirty": false,
+    "rayon_threads": null,
+    "date": "2026-09-28 19:31:33"
+  },
+  "source": "benchmarks/.work/full/deepseek/src",
+  "wall_s": 7.406124291999731,
+  "data": {
+    "bytes": 2302165966,
+    "inspect_s": 0.0006846287441248933,
+    "verify_warm_s": 0.8264603749848902
+  }
+}

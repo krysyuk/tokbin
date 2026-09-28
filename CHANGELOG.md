@@ -106,6 +106,10 @@ schema_version: 1
   of schema steps applied on a hard-linked copy, checked, then published; a copy
   `<name>-v<schema>` by default, the source itself only with `--in-place`. Schema 1
   is current, so there are no steps yet.
+- Benchmarks (`benchmarks/`): a synthetic regression suite compared against a saved
+  baseline (a metric more than 10% slower fails), and studies of writing, reading,
+  storage and the torch adapter on TinyStories; results and limitations in
+  `docs/benchmarks.md`. The `bench` dependency group adds matplotlib and psutil.
 
 ### Fixed
 

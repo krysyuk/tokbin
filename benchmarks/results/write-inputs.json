@@ -1,0 +1,78 @@
+{
+  "experiment": "inputs",
+  "env": {
+    "cpu": "Apple M4 Pro",
+    "cores": 12,
+    "memory_bytes": 25769803776,
+    "os": "Darwin 25.6.0",
+    "machine": "arm64",
+    "python": "3.12.9",
+    "numpy": "2.5.1",
+    "tokenizers": "0.23.1",
+    "tokbin": "0.1.0.dev0",
+    "commit": "42ffc5e",
+    "dirty": false,
+    "rayon_threads": null,
+    "date": "2026-09-28 19:07:35"
+  },
+  "n": 200000,
+  "repeat": 3,
+  "tokenizers": {
+    "deepseek": "experiments/DeepSeek-V4.1-Flash/tokenizer.json",
+    "bpe12k": "experiments/tokenizers/bpe12k/tokenizer.json"
+  },
+  "wall_s": 191.63518891698914,
+  "data": {
+    "tokenizer": "deepseek",
+    "n_docs": 200000,
+    "txt_files_created_s": 14.223354124987964,
+    "jsonl_bytes": 173980481,
+    "rows": {
+      "in_memory": {
+        "best": 12.861651165992953,
+        "median": 13.01844654197339,
+        "samples": [
+          12.861651165992953,
+          13.01844654197339,
+          13.224211875000037
+        ]
+      },
+      "jsonl": {
+        "best": 13.348357165989,
+        "median": 14.124296457972378,
+        "samples": [
+          13.348357165989,
+          14.124296457972378,
+          16.33232924999902
+        ]
+      },
+      "txt": {
+        "best": 21.9704435839667,
+        "median": 22.053455834044144,
+        "samples": [
+          24.114922416978516,
+          22.053455834044144,
+          21.9704435839667
+        ]
+      },
+      "read_jsonl": {
+        "best": 0.45317154203075916,
+        "median": 0.4552802079706453,
+        "samples": [
+          0.4552802079706453,
+          0.45317154203075916,
+          0.4644555839477107
+        ]
+      },
+      "read_txt": {
+        "best": 7.951317249971908,
+        "median": 7.98273191699991,
+        "samples": [
+          7.951317249971908,
+          7.98273191699991,
+          8.022653791005723
+        ]
+      }
+    }
+  }
+}

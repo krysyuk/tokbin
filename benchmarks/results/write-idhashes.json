@@ -1,0 +1,56 @@
+{
+  "experiment": "idhashes",
+  "env": {
+    "cpu": "Apple M4 Pro",
+    "cores": 12,
+    "memory_bytes": 25769803776,
+    "os": "Darwin 25.6.0",
+    "machine": "arm64",
+    "python": "3.12.9",
+    "numpy": "2.5.1",
+    "tokenizers": "0.23.1",
+    "tokbin": "0.1.0.dev0",
+    "commit": "42ffc5e",
+    "dirty": false,
+    "rayon_threads": null,
+    "date": "2026-09-28 18:46:18"
+  },
+  "n": 200000,
+  "repeat": 3,
+  "tokenizers": {
+    "deepseek": "experiments/DeepSeek-V4.1-Flash/tokenizer.json",
+    "bpe12k": "experiments/tokenizers/bpe12k/tokenizer.json"
+  },
+  "wall_s": 16.258419999969192,
+  "data": {
+    "rows": [
+      {
+        "n": 1000000,
+        "add_s": 0.3458397079957649,
+        "add_ns_per_id": 345.8397079957649,
+        "held_bytes": 15106048,
+        "report_s": 0.09661933401366696,
+        "duplicates": 0,
+        "peak_growth_in_report": 28672000
+      },
+      {
+        "n": 4000000,
+        "add_s": 1.3948831250309013,
+        "add_ns_per_id": 348.7207812577253,
+        "held_bytes": 40075264,
+        "report_s": 0.6516948339994997,
+        "duplicates": 0,
+        "peak_growth_in_report": 123813888
+      },
+      {
+        "n": 16000000,
+        "add_s": 5.623971250024624,
+        "add_ns_per_id": 351.498203126539,
+        "held_bytes": 254722048,
+        "report_s": 5.607293749984819,
+        "duplicates": 0,
+        "peak_growth_in_report": 503742464
+      }
+    ]
+  }
+}

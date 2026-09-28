@@ -1,0 +1,61 @@
+{
+  "experiment": "layout",
+  "env": {
+    "cpu": "Apple M4 Pro",
+    "cores": 12,
+    "memory_bytes": 25769803776,
+    "os": "Darwin 25.6.0",
+    "machine": "arm64",
+    "python": "3.12.9",
+    "numpy": "2.5.1",
+    "tokenizers": "0.23.1",
+    "tokbin": "0.1.0.dev0",
+    "commit": "42ffc5e",
+    "dirty": false,
+    "rayon_threads": null,
+    "date": "2026-09-28 19:33:39"
+  },
+  "sources": {
+    "deepseek": "benchmarks/.work/full/deepseek/src",
+    "bpe12k": "benchmarks/.work/full/bpe12k/src"
+  },
+  "wall_s": 0.03338233398972079,
+  "data": {
+    "deepseek": {
+      "dtype": "uint32",
+      "n_items": 530500348,
+      "n_docs": 2717495,
+      "files": {
+        "meta.json": 1356,
+        "tokenizer/tokenizer.json": 10071774,
+        "tokenizer/tokenizer_config.json": 97,
+        "train-00000.bin": 536870912,
+        "train-00001.bin": 536870912,
+        "train-00002.bin": 536870912,
+        "train-00003.bin": 511388656,
+        "train-ids.idx.npy": 21740096,
+        "train-ids.jsonl": 126611155,
+        "train-offsets.npy": 21740096,
+        "train-skipped.jsonl": 0
+      },
+      "total": 2302165966
+    },
+    "bpe12k": {
+      "dtype": "uint16",
+      "n_items": 449309802,
+      "n_docs": 2717495,
+      "files": {
+        "meta.json": 927,
+        "tokenizer/tokenizer.json": 862624,
+        "tokenizer/tokenizer_config.json": 56,
+        "train-00000.bin": 536870912,
+        "train-00001.bin": 361748692,
+        "train-ids.idx.npy": 21740096,
+        "train-ids.jsonl": 126611155,
+        "train-offsets.npy": 21740096,
+        "train-skipped.jsonl": 0
+      },
+      "total": 1069574558
+    }
+  }
+}

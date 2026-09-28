@@ -1,0 +1,32 @@
+{
+  "env": {
+    "cpu": "Apple M4 Pro",
+    "cores": 12,
+    "memory_bytes": 25769803776,
+    "os": "Darwin 25.6.0",
+    "machine": "arm64",
+    "python": "3.12.9",
+    "numpy": "2.5.1",
+    "tokenizers": "0.23.1",
+    "tokbin": "0.1.0.dev0",
+    "commit": "42ffc5e",
+    "dirty": false,
+    "rayon_threads": null,
+    "date": "2026-09-28 21:44:51"
+  },
+  "n_docs": 50000,
+  "n_tokens": 10045778,
+  "metrics": {
+    "write_ns_per_token": 22.312532687752853,
+    "open_100_shards_us": 9634.526687477774,
+    "item_us": 1.7002914733943442,
+    "window_2048_us": 1.743326186964822,
+    "doc_us": 2.0327823984089832,
+    "id_of_doc_us": 2.530062992001092,
+    "sample_32x2048_us": 64.1632893092492,
+    "sample_512x128_us": 852.1774102518975,
+    "mixture_32x2048_us": 84.2718300901879,
+    "inspect_ms": 5.217907562837354,
+    "verify_ms": 15.159276001213584
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "experiment": "loader",
+  "env": {
+    "cpu": "Apple M4 Pro",
+    "cores": 12,
+    "memory_bytes": null,
+    "os": "Darwin 25.6.0",
+    "machine": "arm64",
+    "python": "3.12.9",
+    "numpy": "2.5.3",
+    "tokenizers": null,
+    "tokbin": "0.1.0.dev0",
+    "commit": "42ffc5e",
+    "dirty": false,
+    "rayon_threads": null,
+    "date": "2026-09-28 21:06:51",
+    "torch": "2.14.0"
+  },
+  "block": 2048,
+  "batch": 32,
+  "data": [
+    {
+      "dataset": "raw memmap",
+      "workers": 0,
+      "first_batch_s": 0.0036482500145211816,
+      "batches_per_s": 9234.118345883226
+    },
+    {
+      "dataset": "WindowDataset",
+      "workers": 0,
+      "first_batch_s": 0.007399874972179532,
+      "batches_per_s": 6186.778069468959
+    },
+    {
+      "dataset": "MixtureDataset",
+      "workers": 0,
+      "first_batch_s": 0.21801133401459083,
+      "batches_per_s": 1245.3425488300202
+    },
+    {
+      "dataset": "raw memmap",
+      "workers": 2,
+      "first_batch_s": 0.582774167007301,
+      "batches_per_s": 7946.126597933246
+    },
+    {
+      "dataset": "WindowDataset",
+      "workers": 2,
+      "first_batch_s": 0.5979251660173759,
+      "batches_per_s": 6347.700875635443
+    },
+    {
+      "dataset": "MixtureDataset",
+      "workers": 2,
+      "first_batch_s": 0.6115399589762092,
+      "batches_per_s": 1997.403210027191
+    },
+    {
+      "dataset": "raw memmap",
+      "workers": 4,
+      "first_batch_s": 0.6171381670283154,
+      "batches_per_s": 9842.330008634442
+    },
+    {
+      "dataset": "WindowDataset",
+      "workers": 4,
+      "first_batch_s": 0.6321417089784518,
+      "batches_per_s": 9604.646759459445
+    },
+    {
+      "dataset": "MixtureDataset",
+      "workers": 4,
+      "first_batch_s": 0.6577510409988463,
+      "batches_per_s": 3649.2984684693965
+    },
+    {
+      "dataset": "raw memmap",
+      "workers": 8,
+      "first_batch_s": 0.6654297499917448,
+      "batches_per_s": 10289.084695541136
+    },
+    {
+      "dataset": "WindowDataset",
+      "workers": 8,
+      "first_batch_s": 0.6724178330041468,
+      "batches_per_s": 10076.406469945281
+    },
+    {
+      "dataset": "MixtureDataset",
+      "workers": 8,
+      "first_batch_s": 0.732533083006274,
+      "batches_per_s": 6103.45276166817
+    }
+  ]
+}

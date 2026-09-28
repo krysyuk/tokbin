@@ -59,6 +59,11 @@ dev = [
 full = [
     "tokenizers>=0.15",
 ]
+# Benchmarks and their charts (benchmarks/); not installed by default.
+bench = [
+    "matplotlib>=3.8",
+    "psutil>=5.9",
+]
 
 [tool.uv]
 default-groups = ["dev", "full"]
@@ -68,7 +73,7 @@ default-groups = ["dev", "full"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-src = ["src", "tests", "scripts"]
+src = ["src", "tests", "scripts", "benchmarks"]
 # Markdown is not formatted: code samples in the docs are aligned by hand.
 extend-exclude = ["*.md"]
 
@@ -89,7 +94,7 @@ select = [
 ]
 
 [tool.ruff.lint.isort]
-known-local-folder = ["support"]
+known-local-folder = ["support", "bench_common"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 # Spec 2.4: optional packages are imported only inside functions.
@@ -98,6 +103,7 @@ banned-module-level-imports = ["tokenizers", "torch", "zstandard", "huggingface_
 [tool.ruff.lint.per-file-ignores]
 "src/tokbin/cli/**" = ["T20"]    # only the CLI may print
 "scripts/**" = ["T20", "S603"]
+"benchmarks/**" = ["T20", "S603", "S311", "S106", "ANN401", "B023", "SIM105", "TID253", "S301"]  # scripts; lambdas run in place
 "tests/fixtures/*.py" = ["T20"]
 "tests/**" = ["S101", "S106", "S603", "ANN", "TID253"]  # S106: "token" is not a password
 
