@@ -129,6 +129,9 @@ class PartialInfo:
     problem: Problem | None
     #: The process writing it right now, as ``(pid, host)``; ``None`` if nobody is.
     writer: tuple[int, str] | None = None
+    #: It was started by ``tokbin build``, whose settings are saved: ``--resume`` alone
+    #: continues it.
+    build: bool = False
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -144,6 +147,7 @@ class PartialInfo:
             "writer": None
             if self.writer is None
             else {"pid": self.writer[0], "host": self.writer[1]},
+            "build": self.build,
         }
 
 
@@ -293,6 +297,8 @@ def _mtime(path: Path) -> str:
 
 def _inspect_partial(partial: Path) -> PartialInfo:
     info = _inspect_partial_files(partial)
+    if (partial / naming.BUILD_RECIPE).is_file():
+        info = replace(info, build=True)
     owner = read_lock(partial)
     if owner is not None and owner.alive:
         return replace(info, writer=(owner.pid, owner.host))

@@ -26,6 +26,8 @@ from tokbin.errors import (
     TokbinWarning,
     UnsupportedFeatureError,
 )
+from tokbin.inputs import jsonl, txt_dir
+from tokbin.ops.build import BuildRecipe, build_source
 from tokbin.ops.clean import CleanResult, clean_source
 from tokbin.ops.doctor import DoctorReport, doctor
 from tokbin.ops.inspect import (
@@ -37,16 +39,19 @@ from tokbin.ops.inspect import (
     inspect_corpus,
     inspect_source,
 )
+from tokbin.ops.migrate import MigrateResult, migrate_source
 from tokbin.ops.pack import PackResult, UnpackResult, pack_source, unpack_pack
+from tokbin.ops.remove import RemoveResult, remove_source
 from tokbin.ops.verify import ShardCheck, VerifyProgress, VerifyReport, verify_source
 from tokbin.read.mixture import Mixture
 from tokbin.read.source import Source, read_source
 from tokbin.write.config import ErrorPolicy, WriterConfig
-from tokbin.write.documents import Segment
+from tokbin.write.documents import Segment, SkipDocument
 from tokbin.write.result import Issue, WriteResult, WriteStats
 from tokbin.write.stream_writer import StreamWriter
 
 __all__ = [
+    "BuildRecipe",
     "CleanResult",
     "CompatibilityError",
     "CompatibilityWarning",
@@ -63,16 +68,19 @@ __all__ = [
     "IntegrityError",
     "InternalError",
     "Issue",
+    "MigrateResult",
     "Mixture",
     "OutOfRangeError",
     "PackResult",
     "PartialInfo",
     "Problem",
+    "RemoveResult",
     "ResumeError",
     "SchemaVersionError",
     "Segment",
     "ShardCheck",
     "ShardingWarning",
+    "SkipDocument",
     "Source",
     "SourceInfo",
     "SplitInfo",
@@ -87,12 +95,17 @@ __all__ = [
     "WriteStats",
     "WriterConfig",
     "__version__",
+    "build_source",
     "clean_source",
     "doctor",
     "inspect_corpus",
     "inspect_source",
+    "jsonl",
+    "migrate_source",
     "pack_source",
     "read_source",
+    "remove_source",
+    "txt_dir",
     "unpack_pack",
     "verify_source",
 ]

@@ -164,7 +164,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             error = InternalError.wrap(exc, where=f"tokbin.cli.commands.{name}")
             error.__cause__ = exc
 
-    shown = [str(w.message) for w in caught]
+    handled = outcome.shown_codes if outcome else frozenset()
+    shown = [
+        text
+        for text in (str(w.message) for w in caught)
+        if not any(text.startswith(f"[{code}]") for code in handled)
+    ]
     code = exit_code_for(error) if error is not None else outcome.exit_code if outcome else 1
     n_warnings = len(shown) + (outcome.n_warnings if outcome else 0)
     if ctx.strict and n_warnings and code == EXIT_OK:

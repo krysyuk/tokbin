@@ -109,5 +109,9 @@ class Fields:
     def get_object(self, key: str) -> Fields:
         return Fields(self._get(key), f"{self.where}: {key}")
 
+    def get_any(self, key: str) -> object:
+        """The raw value; the caller validates it (for example by a constructor)."""
+        return self._get(key)
+
     def field_names(self) -> Sequence[str]:
         return list(self._data)

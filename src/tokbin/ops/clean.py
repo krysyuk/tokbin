@@ -1,8 +1,9 @@
 """Removal of unfinished writes (``tokbin clean``, spec 14.2).
 
 Only what tokbin itself left behind is removed: the ``<name>.partial/`` directory of an
-interrupted write and hidden ``.<name>.old-<pid>`` directories of a replacement that
-was interrupted after the new version was already in place. A partial directory that a
+interrupted write, hidden ``.<name>.old-<pid>`` directories of a replacement that was
+interrupted after the new version was already in place, and ``.<name>.rm-<pid>`` of an
+interrupted ``rm``. A partial directory that a
 live process is writing is never touched.
 """
 
@@ -69,7 +70,11 @@ def clean_source(path: str | Path) -> CleanResult:
         removed.append(partial)
 
     if target.is_dir():  # the new version is in place: old copies are garbage
-        for old in sorted(target.parent.glob(f".{target.name}.old-*")):
+        leftovers = [
+            *target.parent.glob(f".{target.name}.old-*"),
+            *target.parent.glob(f".{target.name}.rm-*"),
+        ]
+        for old in sorted(leftovers):
             if old.is_dir() and not old.is_symlink():
                 n_bytes += _size(old)
                 shutil.rmtree(old)

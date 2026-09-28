@@ -50,6 +50,8 @@ Classes: `ConfigError`.
 | `TB-C308` | Output already exists |
 | `TB-C309` | Source is not finished |
 | `TB-C310` | Invalid mixture weights |
+| `TB-C311` | No input files found |
+| `TB-C312` | Nothing to resume the build from |
 
 ## K: Contract
 
@@ -74,6 +76,7 @@ Classes: `DataError`, `DataQualityWarning`.
 | `TB-D203` | Document is empty |
 | `TB-D204` | Tokenizer failed on the document |
 | `TB-D205` | Duplicate document id |
+| `TB-D206` | Input record cannot be read |
 | `TB-D301` | Documents were skipped when the source was written |
 
 ## F: Format

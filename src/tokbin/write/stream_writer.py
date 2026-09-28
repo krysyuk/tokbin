@@ -527,11 +527,22 @@ class StreamWriter:
             if self._skip_inputs == 0:
                 self._check_resume_position(doc)
             return
-        try:
-            text: str | None = decode_text(doc.text)
-            error: DataError | None = None
-        except DataError as err:
-            text, error = None, err
+        text: str | None
+        error: DataError | None
+        if doc.unreadable is not None:
+            text, error = (
+                None,
+                DataError(
+                    codes.INPUT_UNREADABLE,
+                    why=doc.unreadable,
+                    fix="fix the input record, or ignore it if a few are expected",
+                ),
+            )
+        else:
+            try:
+                text, error = decode_text(doc.text), None
+            except DataError as err:
+                text, error = None, err
         self._pending.append(_Pending(doc, text, error))
         self._pending_chars += len(text) if text is not None else 0
         if len(self._pending) >= self._config.batch_docs or self._pending_chars >= _BATCH_CHARS:
@@ -957,6 +968,11 @@ class StreamWriter:
         if self._side is None:
             raise InternalError.wrap(RuntimeError("the writer is not open"))
         return self._side
+
+    @property
+    def partial_dir(self) -> Path | None:
+        """The ``<name>.partial`` directory of the write in progress; ``None`` otherwise."""
+        return self._partial
 
     # --- finishing --------------------------------------------------------------------
 

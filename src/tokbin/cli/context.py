@@ -24,6 +24,9 @@ class Outcome:
     exit_code: int
     data: dict[str, object]
     n_warnings: int = 0
+    #: Codes of warnings the command has already shown (with counts); ``main`` does not
+    #: repeat the library warnings that carry them.
+    shown_codes: frozenset[str] = frozenset()
 
 
 @dataclass(slots=True, kw_only=True)

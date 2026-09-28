@@ -302,7 +302,8 @@ def _drop_work_files(partial: Path) -> None:
 
     The lock goes last: until then no other process may take the directory.
     """
-    for path in (*partial.glob("*.i64"), partial / naming.CHECKPOINT, partial / naming.LOCK):
+    work = (naming.CHECKPOINT, naming.BUILD_RECIPE, naming.LOCK)
+    for path in (*partial.glob("*.i64"), *(partial / name for name in work)):
         with contextlib.suppress(FileNotFoundError):
             path.unlink()
 

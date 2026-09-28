@@ -98,6 +98,8 @@ NOT_A_CORPUS = _register("TB-C307", "Path is a source, not a corpus")
 OUTPUT_EXISTS = _register("TB-C308", "Output already exists")
 SOURCE_NOT_FINISHED = _register("TB-C309", "Source is not finished")
 MIX_WEIGHTS_INVALID = _register("TB-C310", "Invalid mixture weights")
+NO_INPUT_FILES = _register("TB-C311", "No input files found")
+BUILD_RECIPE_MISSING = _register("TB-C312", "Nothing to resume the build from")
 
 # --- K: contract --------------------------------------------------------------------
 
@@ -114,6 +116,7 @@ TOKEN_ID_OUT_OF_RANGE = _register("TB-D202", "Token id is out of range for the d
 DOCUMENT_EMPTY = _register("TB-D203", "Document is empty")
 TOKENIZER_FAILED = _register("TB-D204", "Tokenizer failed on the document")
 DUPLICATE_DOC_ID = _register("TB-D205", "Duplicate document id")
+INPUT_UNREADABLE = _register("TB-D206", "Input record cannot be read")
 DOCS_WERE_SKIPPED = _register("TB-D301", "Documents were skipped when the source was written")
 
 # --- S: sharding --------------------------------------------------------------------

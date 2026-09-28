@@ -91,6 +91,21 @@ schema_version: 1
 - `tokbin.adapters.torch`: `WindowDataset` and `MixtureDataset`, map-style datasets
   for `DataLoader` returning `int64` tensors; importing the module does not import
   torch.
+- Standard inputs `txt_dir(root)` and `jsonl(root, field="text")`: files in a
+  portable deterministic order (resume depends on it), progress in input bytes. A
+  record the generator cannot read is yielded as `SkipDocument(doc_id, reason)`, a new
+  document form: it is recorded in `skipped.jsonl` (`TB-D206`) instead of crashing
+  the write.
+- `build_source(target, recipe)` and `tokbin build <target> --from-txt DIR |
+  --from-jsonl PATH --tokenizer PATH [--shard-size 512M ...]`. The settings are saved
+  in the partial directory, so `tokbin build <target> --resume` alone continues an
+  interrupted build; `Ctrl+C` prints that command and exits with code 130.
+- `remove_source(path)` and `tokbin rm <path> --yes`: only tokbin sources, never
+  through a symlink or under a live writer; the source disappears in one rename.
+- `migrate_source(path, out=None, in_place=False)` and `tokbin migrate`: a registry
+  of schema steps applied on a hard-linked copy, checked, then published; a copy
+  `<name>-v<schema>` by default, the source itself only with `--in-place`. Schema 1
+  is current, so there are no steps yet.
 
 ### Fixed
 

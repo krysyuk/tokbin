@@ -44,6 +44,8 @@ For torch, `tokbin.adapters.torch` has `WindowDataset` and `MixtureDataset`
 ## Command line
 
 ```bash
+tokbin build corpus/web --from-jsonl data/web --tokenizer gpt2/tokenizer.json
+tokbin build corpus/web --resume            # after Ctrl+C or a crash: same settings
 tokbin ls corpus                            # sources, states and sizes
 tokbin info corpus                          # tokens, tokenizer, mixture, remarks
 tokbin info corpus/web                      # dtype, splits, special tokens of one source
@@ -52,6 +54,8 @@ tokbin verify corpus/web                    # sha256 of every shard and all inde
 tokbin clean corpus/web                     # remove an unfinished write (corpus/web.partial)
 tokbin pack corpus/web --tar                # corpus/web.tbpack.tar: compressed, with sha256 manifest
 tokbin unpack web.tbpack.tar --into corpus  # unpack, verify, publish
+tokbin migrate corpus/web                   # convert to the current format schema (a copy)
+tokbin rm corpus/web --yes                  # delete a source
 tokbin doctor                               # version, mode, optional packages
 ```
 

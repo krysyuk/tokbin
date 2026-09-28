@@ -14,6 +14,7 @@ from tokbin import codes
 from tokbin.errors import ConfigError, FormatError
 
 __all__ = [
+    "BUILD_RECIPE",
     "CHECKPOINT",
     "DATASET_JSON",
     "LOCK",
@@ -45,6 +46,8 @@ META_JSON: Final = "meta.json"
 DATASET_JSON: Final = "dataset.json"
 MIX_JSON: Final = "mix.json"
 CHECKPOINT: Final = "checkpoint.json"
+#: Settings of a `tokbin build`, kept in the partial directory for `--resume`.
+BUILD_RECIPE: Final = "build.json"
 LOCK: Final = ".lock"
 TOKENIZER_DIR: Final = "tokenizer"
 TOKENIZER_JSON: Final = "tokenizer.json"

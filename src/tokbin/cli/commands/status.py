@@ -42,6 +42,9 @@ def _render_source(info: SourceInfo, ctx: Context, label: str) -> None:
         elif partial.problem is not None:
             ctx.line(pad + s.red(f"[{partial.problem.code}] {partial.problem.what}"))
             ctx.line(pad + s.dim(f"cannot be resumed; remove it with `tokbin clean {label}`"))
+        elif partial.resumable and partial.build:
+            ctx.line(pad + s.dim(f"resume: `tokbin build {label} --resume`"))
+            ctx.line(pad + s.dim(f"discard: `tokbin clean {label}`"))
         elif partial.resumable:
             ctx.line(pad + s.dim("resume: repeat the write with resume=True and the same input"))
             ctx.line(pad + s.dim(f"discard: `tokbin clean {label}`"))

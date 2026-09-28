@@ -5,9 +5,13 @@
     "text"                         plain text (str or UTF-8 bytes)
     ("doc_id", "text")             text with a name (recommended: enables resume checks)
     ("doc_id", [Segment, ...])     segments (multimodal; not supported before 2.x)
+    SkipDocument("doc_id", "why")  an input record the generator could not read
 
 All documents of one write must have the same form. Text may be given as ``bytes``:
 a decoding error then becomes a skipped document instead of a crashed generator.
+``SkipDocument`` does the same for records the generator itself cannot parse (a broken
+JSON line): the document is recorded in ``skipped.jsonl`` with the reason, and it counts
+towards ``ErrorPolicy.max_skip_ratio``. It fits either form.
 """
 
 from __future__ import annotations
@@ -18,7 +22,7 @@ from typing import Literal, NamedTuple
 from tokbin import codes
 from tokbin.errors import ConfigError, ContractError, DataError, UnsupportedFeatureError
 
-__all__ = ["Document", "DocumentNormalizer", "Mode", "Segment", "decode_text"]
+__all__ = ["Document", "DocumentNormalizer", "Mode", "Segment", "SkipDocument", "decode_text"]
 
 Mode = Literal["single", "multi"]
 _Form = Literal["text", "named"]
@@ -32,12 +36,21 @@ class Segment(NamedTuple):
     data: object
 
 
+class SkipDocument(NamedTuple):
+    """An input record that cannot be read; the writer records it as skipped."""
+
+    id: str | None
+    reason: str
+
+
 @dataclass(frozen=True, slots=True)
 class Document:
     """A normalized input document."""
 
     id: str | None
     text: str | bytes
+    #: Why the generator could not read it (a ``SkipDocument``); ``None`` normally.
+    unreadable: str | None = None
 
 
 def _describe(value: object) -> str:
@@ -67,6 +80,15 @@ class DocumentNormalizer:
         self._form: _Form | None = None
 
     def normalize(self, doc: object) -> Document:
+        if isinstance(doc, SkipDocument):
+            if doc.id is not None and not isinstance(doc.id, str):
+                raise ContractError(
+                    codes.DOCUMENT_FORM_INVALID,
+                    f"SkipDocument id {_describe(doc.id)}",
+                    why="the id of a SkipDocument must be a string or None",
+                    fix="pass SkipDocument(doc_id: str | None, reason: str)",
+                )
+            return Document(doc.id, b"", unreadable=str(doc.reason))
         form, result = self._classify(doc)
         if self._form is None:
             self._form = form
