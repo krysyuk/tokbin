@@ -6,6 +6,18 @@ by weight, pack datasets for transfer and verify their integrity.
 
 > Status: pre-alpha, version 0.1 is in development.
 
+## Documentation
+
+The full documentation, with runnable examples and their output, is in [docs/](docs/README.md):
+
+- [Getting started](docs/getting-started.md) and [core concepts](docs/concepts.md)
+- [Writing data](docs/writing.md), [data generators](docs/generators.md),
+  [resuming interrupted writes](docs/resume.md)
+- [Reading data](docs/reading.md), [mixing sources](docs/mixtures.md),
+  [PyTorch integration](docs/pytorch.md)
+- [Statistics and verification](docs/statistics.md), [archives](docs/archives.md)
+- [Command line](docs/cli.md), [errors and troubleshooting](docs/troubleshooting.md)
+
 ## Installation
 
 ```bash
