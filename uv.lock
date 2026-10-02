@@ -2036,7 +2036,7 @@ wheels = [
 
 [[package]]
 name = "tokbin"
-version = "0.1.0.dev0"
+version = "0.1.0"
 source = { editable = "packages/tokbin" }
 dependencies = [
     { name = "tokbin-core" },
@@ -2051,7 +2051,7 @@ requires-dist = [
 
 [[package]]
 name = "tokbin-core"
-version = "0.1.0.dev0"
+version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },

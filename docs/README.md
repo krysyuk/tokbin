@@ -50,7 +50,7 @@ print(read_source("corpus/web").doc(0))
 - Every example is a complete script. The first line names the file, e.g. `# write_web.py`;
   save it under that name in your project folder and run `python write_web.py`.
 - The block right after an example is its **real output**, copied from a run with
-  tokbin 0.1.0.dev0 and the GPT-2 tokenizer.
+  tokbin 0.1.0 and the GPT-2 tokenizer.
 - Lines starting with `$` are typed in a terminal; don't type the `$` itself.
 - All examples assume this project folder:
 

@@ -7,7 +7,7 @@ mixes sources by weight, packs datasets for transfer and verifies their integrit
 tokbin supports **pretraining only**: plain text packed into a continuous token stream. It
 is not a tool for fine-tuning, SFT or chat data.
 
-> Status: pre-alpha, version 0.1 is in development.
+> Status: alpha. The API and the on-disk format may still change before 1.0.
 
 ## Is tokbin for you?
 
@@ -26,19 +26,19 @@ object storage, or your data fits in memory. A 30-line `numpy.memmap` script may
 need.
 
 The details, a comparison with a hand-written script and the measured costs are in
-[Is tokbin for you?](docs/when-to-use.md)
+[Is tokbin for you?](https://github.com/krysyuk/tokbin/blob/main/docs/when-to-use.md)
 
 ## Documentation
 
-The full documentation, with runnable examples and their output, is in [docs/](docs/README.md):
+The full documentation, with runnable examples and their output, is in [docs/](https://github.com/krysyuk/tokbin/blob/main/docs/README.md):
 
-- [Getting started](docs/getting-started.md) and [core concepts](docs/concepts.md)
-- [Writing data](docs/writing.md), [data generators](docs/generators.md),
-  [resuming interrupted writes](docs/resume.md)
-- [Reading data](docs/reading.md), [mixing sources](docs/mixtures.md),
-  [PyTorch integration](docs/pytorch.md)
-- [Statistics and verification](docs/statistics.md), [archives](docs/archives.md)
-- [Command line](docs/cli.md), [errors and troubleshooting](docs/troubleshooting.md)
+- [Getting started](https://github.com/krysyuk/tokbin/blob/main/docs/getting-started.md) and [core concepts](https://github.com/krysyuk/tokbin/blob/main/docs/concepts.md)
+- [Writing data](https://github.com/krysyuk/tokbin/blob/main/docs/writing.md), [data generators](https://github.com/krysyuk/tokbin/blob/main/docs/generators.md),
+  [resuming interrupted writes](https://github.com/krysyuk/tokbin/blob/main/docs/resume.md)
+- [Reading data](https://github.com/krysyuk/tokbin/blob/main/docs/reading.md), [mixing sources](https://github.com/krysyuk/tokbin/blob/main/docs/mixtures.md),
+  [PyTorch integration](https://github.com/krysyuk/tokbin/blob/main/docs/pytorch.md)
+- [Statistics and verification](https://github.com/krysyuk/tokbin/blob/main/docs/statistics.md), [archives](https://github.com/krysyuk/tokbin/blob/main/docs/archives.md)
+- [Command line](https://github.com/krysyuk/tokbin/blob/main/docs/cli.md), [errors and troubleshooting](https://github.com/krysyuk/tokbin/blob/main/docs/troubleshooting.md)
 
 ## Installation
 
@@ -96,7 +96,7 @@ tokbin doctor                               # version, mode, optional packages
 Every command accepts `--json` (machine-readable output), `--no-color` and `--strict`
 (warnings fail with exit code 1). Exit codes: 0 success, 1 error, 2 wrong usage,
 3 integrity check failed, 4 missing dependency, 130 interrupted. Error codes are
-listed in [docs/errors.md](docs/errors.md).
+listed in [docs/errors.md](https://github.com/krysyuk/tokbin/blob/main/docs/errors.md).
 
 ## Development
 

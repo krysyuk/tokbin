@@ -9,7 +9,7 @@ $ tokbin --help
 ```
 
 ```text
-tokbin 0.1.0.dev0 · pretraining data for language models: tokenize once, read windows via memmap
+tokbin 0.1.0 · pretraining data for language models: tokenize once, read windows via memmap
 
 Usage: tokbin [OPTIONS] <COMMAND>
 
@@ -246,7 +246,7 @@ corpus/web/   1,772 tokens · complete
 
   dtype       uint16 · vocab 50,257
   tokenizer   gpt2 · 31dba887 · eos 50256 · no bos
-  format      schema 1 · written by tokbin 0.1.0.dev0
+  format      schema 1 · written by tokbin 0.1.0
 
   split   tokens   docs   shards      size   skipped
   train    1,746     60        1   3.4 KiB         1
@@ -529,7 +529,7 @@ $ tokbin doctor
 ```
 
 ```text
-tokbin 0.1.0.dev0 · mode full · Python 3.12.9 · Darwin arm64
+tokbin 0.1.0 · mode full · Python 3.12.9 · Darwin arm64
   ✔ numpy             2.5.1
   ✔ tokenizers        0.23.1
   ✔ zstd              0.25.0
@@ -559,7 +559,7 @@ $ tokbin info corpus/missing --json
 ```json
 {
   "format": 1,
-  "tokbin": "0.1.0.dev0",
+  "tokbin": "0.1.0",
   "command": "info",
   "mode": "full",
   "exit_code": 1,

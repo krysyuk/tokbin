@@ -74,7 +74,7 @@ The beginning of `manifest.json`:
 {
   "format": "tokbin-pack",
   "format_version": 1,
-  "tokbin_version": "0.1.0.dev0",
+  "tokbin_version": "0.1.0",
   "created_at": "2026-10-02T11:35:16Z",
   "source": "web",
   "method": "zstd",

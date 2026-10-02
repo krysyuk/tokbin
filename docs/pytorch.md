@@ -28,7 +28,7 @@ corpus/tinystories/   4,660,620 tokens · complete
 
   dtype       uint16 · vocab 50,257
   tokenizer   gpt2 · 31dba887 · eos 50256 · no bos
-  format      schema 1 · written by tokbin 0.1.0.dev0
+  format      schema 1 · written by tokbin 0.1.0
 
   split      tokens     docs   shards        size   skipped
   train   4,466,061   20,000        1     8.5 MiB         0

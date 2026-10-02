@@ -149,7 +149,7 @@ print(json.dumps(web.to_dict(), indent=2))
   "name": "web",
   "state": "complete",
   "schema_version": 1,
-  "tokbin_version": "0.1.0.dev0",
+  "tokbin_version": "0.1.0",
   "dtype": "uint16",
   "vocab_size": 50257,
   "tokenizer_id": "gpt2",

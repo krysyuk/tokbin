@@ -3,7 +3,7 @@
 
 [project]
 name = "tokbin"
-version = "0.1.0.dev0"
+version = "0.1.0"
 description = "Pretraining data for language models: tokenize text once into resumable, verifiable binary shards (full install: write and read). Pretraining only; not for SFT or chat data."
 keywords = ["llm", "pretraining", "language-model", "tokenization", "dataset", "memmap", "pytorch"]
 readme = "README.md"
@@ -11,9 +11,15 @@ license = "MIT"
 authors = [{ name = "Krysyuk" }]
 requires-python = ">=3.10"
 dependencies = [
-    "tokbin-core==0.1.0.dev0",
+    "tokbin-core==0.1.0",
     "tokenizers>=0.15",
 ]
+
+[project.urls]
+Homepage = "https://github.com/krysyuk/tokbin"
+Documentation = "https://github.com/krysyuk/tokbin/blob/main/docs/README.md"
+Changelog = "https://github.com/krysyuk/tokbin/blob/main/CHANGELOG.md"
+Issues = "https://github.com/krysyuk/tokbin/issues"
 
 [build-system]
 requires = ["hatchling>=1.26"]

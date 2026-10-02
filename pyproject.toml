@@ -1,6 +1,6 @@
 [project]
 name = "tokbin-core"
-version = "0.1.0.dev0"
+version = "0.1.0"
 description = "Pretraining data for language models: tokenize text once into resumable, verifiable binary shards and read random windows through memmap. Pretraining only; not for SFT or chat data."
 keywords = ["llm", "pretraining", "language-model", "tokenization", "dataset", "memmap", "pytorch"]
 readme = "README.md"
@@ -9,7 +9,7 @@ license-files = ["LICENSE"]
 authors = [{ name = "Krysyuk" }]
 requires-python = ">=3.10"
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
@@ -23,6 +23,12 @@ classifiers = [
 dependencies = [
     "numpy>=1.24",
 ]
+
+[project.urls]
+Homepage = "https://github.com/krysyuk/tokbin"
+Documentation = "https://github.com/krysyuk/tokbin/blob/main/docs/README.md"
+Changelog = "https://github.com/krysyuk/tokbin/blob/main/CHANGELOG.md"
+Issues = "https://github.com/krysyuk/tokbin/issues"
 
 [project.optional-dependencies]
 # Compression for pack/unpack on Python < 3.14 (3.14 has compression.zstd in stdlib).
