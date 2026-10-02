@@ -1,7 +1,8 @@
 [project]
 name = "tokbin-core"
 version = "0.1.0.dev0"
-description = "Tokenized corpora as memory-mappable binary shards: write, read, mix, verify."
+description = "Pretraining data for language models: tokenize text once into resumable, verifiable binary shards and read random windows through memmap. Pretraining only; not for SFT or chat data."
+keywords = ["llm", "pretraining", "language-model", "tokenization", "dataset", "memmap", "pytorch"]
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]

@@ -18,6 +18,8 @@ print(read_source("corpus/web").doc(0))
 
 ## Start here
 
+0. [Is tokbin for you?](when-to-use.md): what tokbin is for, what it is not for, and what it
+   costs. Two minutes; read this first.
 1. [Core concepts](concepts.md): the words used everywhere: source, split, shard, window.
    Five minutes.
 2. [Getting started](getting-started.md): install, write your first dataset, read it back.

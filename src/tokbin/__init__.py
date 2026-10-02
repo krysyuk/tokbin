@@ -1,4 +1,6 @@
-"""tokbin: tokenized corpora as binary shards, read through memmap.
+"""tokbin: pretraining data for language models.
+
+Text is tokenized once into binary shards and read back through memmap.
 
 ``import tokbin`` imports nothing but the standard library and numpy, and does
 nothing but declarations.

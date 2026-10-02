@@ -9,7 +9,7 @@ $ tokbin --help
 ```
 
 ```text
-tokbin 0.1.0.dev0 · tokenized corpora as memory-mappable binary shards
+tokbin 0.1.0.dev0 · pretraining data for language models: tokenize once, read windows via memmap
 
 Usage: tokbin [OPTIONS] <COMMAND>
 

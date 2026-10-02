@@ -1,5 +1,9 @@
 # tokbin
 
+Pretraining data for language models: tokenize a text corpus once into resumable,
+verifiable binary shards and read random training windows through `numpy.memmap`.
+tokbin supports pretraining only; it is not a tool for fine-tuning, SFT or chat data.
+
 Meta-package: installs `tokbin-core` and `tokenizers`.
 
 ```bash

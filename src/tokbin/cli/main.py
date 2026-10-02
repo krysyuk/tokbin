@@ -46,7 +46,7 @@ EXIT_INTERRUPTED = 130
 JSON_FORMAT = 1
 
 
-TAGLINE = "tokenized corpora as memory-mappable binary shards"
+TAGLINE = "pretraining data for language models: tokenize once, read windows via memmap"
 
 EXAMPLES = (
     ("tokbin build", "corpus/web --from-jsonl data/ --tokenizer tokenizer.json"),

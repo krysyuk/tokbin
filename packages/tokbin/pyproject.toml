@@ -4,7 +4,8 @@
 [project]
 name = "tokbin"
 version = "0.1.0.dev0"
-description = "Tokenized corpora as memory-mappable binary shards (full install: write and read)."
+description = "Pretraining data for language models: tokenize text once into resumable, verifiable binary shards (full install: write and read). Pretraining only; not for SFT or chat data."
+keywords = ["llm", "pretraining", "language-model", "tokenization", "dataset", "memmap", "pytorch"]
 readme = "README.md"
 license = "MIT"
 authors = [{ name = "Krysyuk" }]

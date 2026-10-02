@@ -1,10 +1,32 @@
 # tokbin
 
-Tokenized corpora as binary shards: write from a stream of documents, read random
-windows through `numpy.memmap` without loading the corpus into memory, mix sources
-by weight, pack datasets for transfer and verify their integrity.
+Pretraining data for language models. tokbin tokenizes a text corpus once into binary
+shards, reads random windows through `numpy.memmap` without loading the corpus into memory,
+mixes sources by weight, packs datasets for transfer and verifies their integrity.
+
+tokbin supports **pretraining only**: plain text packed into a continuous token stream. It
+is not a tool for fine-tuning, SFT or chat data.
 
 > Status: pre-alpha, version 0.1 is in development.
+
+## Is tokbin for you?
+
+tokbin is a narrow tool: it prepares **pretraining data for language models**. It was built
+for one workflow: tokenize a large text corpus ahead of time on a cheap machine, move it to
+a rented GPU server, and start training at once, without paying for idle GPUs.
+
+**Use it if** you pretrain or continue pretraining on plain text that is too large for
+memory, prepare data on one machine and train on another, need writes that survive crashes,
+or mix several sources by weight.
+
+**Skip it if** you fine-tune on chats or instructions (no chat templates, loss masks or
+padding), need attention masks at document borders, use a tokenizer that is not a Hugging
+Face `tokenizer.json`, work with non-text data, need distributed writing or streaming from
+object storage, or your data fits in memory. A 30-line `numpy.memmap` script may be all you
+need.
+
+The details, a comparison with a hand-written script and the measured costs are in
+[Is tokbin for you?](docs/when-to-use.md)
 
 ## Documentation
 
