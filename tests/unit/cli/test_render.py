@@ -63,6 +63,8 @@ def test_fmt_int() -> None:
 def test_style_detection(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("NO_COLOR", raising=False)
     monkeypatch.delenv("TERM", raising=False)
+    monkeypatch.delenv("COLORTERM", raising=False)
+    monkeypatch.delenv("WT_SESSION", raising=False)
     assert detect_style(_Stream(tty=True), no_color=False) == Style(color=True, unicode=True)
     assert not detect_style(_Stream(tty=False), no_color=False).color
     assert not detect_style(_Stream(tty=True), no_color=True).color
@@ -76,6 +78,25 @@ def test_style_detection(monkeypatch: pytest.MonkeyPatch) -> None:
     assert detect_style(_Stream(tty=True), no_color=False).color
     assert not detect_style(_Stream(tty=False, encoding="cp1252"), no_color=False).unicode
     assert detect_style(_Stream(tty=False, encoding="UTF8"), no_color=False).unicode
+
+
+def test_truecolor_detection(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    monkeypatch.delenv("TERM", raising=False)
+    monkeypatch.delenv("WT_SESSION", raising=False)
+    monkeypatch.setenv("COLORTERM", "truecolor")
+    assert detect_style(_Stream(tty=True), no_color=False).truecolor
+    # Without color there is nothing to render in 24 bits.
+    assert not detect_style(_Stream(tty=False), no_color=False).truecolor
+    monkeypatch.setenv("COLORTERM", "")
+    assert not detect_style(_Stream(tty=True), no_color=False).truecolor
+
+
+def test_accent() -> None:
+    assert Style(color=False, unicode=True).accent("build") == "build"
+    assert Style(color=True, unicode=True).accent("build") == "\x1b[1;38;5;223mbuild\x1b[0m"
+    truecolor = Style(color=True, unicode=True, truecolor=True)
+    assert truecolor.accent("build") == "\x1b[1;38;2;242;196;170mbuild\x1b[0m"
 
 
 def test_marks() -> None:

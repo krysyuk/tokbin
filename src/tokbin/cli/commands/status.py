@@ -19,11 +19,11 @@ from tokbin.cli.views import (
 from tokbin.ops.inspect import CorpusInfo, SourceInfo, describe
 
 NAME = "status"
-HELP = "the write state of a source or of every source of a corpus"
+HELP = "Show the write state of a source or a corpus"
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("path", help="a source directory or a corpus directory")
+    parser.add_argument("path", help="A source directory or a corpus directory")
 
 
 def _render_source(info: SourceInfo, ctx: Context, label: str) -> None:

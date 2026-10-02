@@ -9,12 +9,12 @@ from tokbin.cli.render import fmt_bytes
 from tokbin.ops.remove import remove_source, source_size
 
 NAME = "rm"
-HELP = "delete a source (and its unfinished write); requires --yes"
+HELP = "Delete a source and its unfinished write (requires --yes)"
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("path", help="a source directory")
-    parser.add_argument("--yes", action="store_true", help="confirm the deletion")
+    parser.add_argument("path", help="A source directory")
+    parser.add_argument("--yes", action="store_true", help="Confirm the deletion")
 
 
 def run(args: argparse.Namespace, ctx: Context) -> Outcome:

@@ -18,18 +18,14 @@ from tokbin.cli.commands import (
     verify,
 )
 
-__all__ = ["COMMANDS"]
+__all__ = ["COMMANDS", "GROUPS"]
 
-COMMANDS: tuple[ModuleType, ...] = (
-    build,
-    ls,
-    info,
-    status,
-    verify,
-    pack,
-    unpack,
-    migrate,
-    clean,
-    rm,
-    doctor,
+#: Commands by purpose, in the order of ``tokbin --help``.
+GROUPS: tuple[tuple[str, tuple[ModuleType, ...]], ...] = (
+    ("Write", (build, migrate)),
+    ("Inspect", (ls, info, status, verify)),
+    ("Transfer", (pack, unpack)),
+    ("Maintenance", (clean, rm, doctor)),
 )
+
+COMMANDS: tuple[ModuleType, ...] = tuple(m for _, modules in GROUPS for m in modules)

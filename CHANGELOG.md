@@ -106,6 +106,14 @@ schema_version: 1
   of schema steps applied on a hard-linked copy, checked, then published; a copy
   `<name>-v<schema>` by default, the source itself only with `--in-place`. Schema 1
   is current, so there are no steps yet.
+- CLI help in the style of uv and ruff: `tokbin` alone, `tokbin --help` and
+  `tokbin help [<command>]` print commands grouped by purpose, global options and
+  examples (exit code 0); command help groups options with `<VALUE>` placeholders,
+  `[default: ...]` and `[possible values: ...]`; commands and flags are highlighted in
+  a light flesh accent (24-bit when `COLORTERM` announces it, otherwise xterm-256).
+  Usage errors name the offending value, suggest a similar command
+  (`tip: a similar command exists: 'build'`) and show the usage of the command they
+  belong to. `-V` is a short form of `--version`.
 - Benchmarks (`benchmarks/`): a synthetic regression suite compared against a saved
   baseline (a metric more than 10% slower fails), and studies of writing, reading,
   storage and the torch adapter on TinyStories; results and limitations in

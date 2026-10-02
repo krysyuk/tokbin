@@ -19,7 +19,7 @@ from tokbin.cli.views import (
 from tokbin.ops.inspect import CorpusInfo, SourceInfo, SourceState, describe
 
 NAME = "info"
-HELP = "describe a corpus or a source: tokens, shards, tokenizer, mixture, remarks"
+HELP = "Describe a corpus or a source: tokens, shards, tokenizer"
 
 _STATE_TEXT: dict[SourceState, tuple[Mark, str]] = {
     "complete": ("ok", "ready for training"),
@@ -39,7 +39,7 @@ _SPLIT_HEADER: tuple[tuple[str, Literal["<", ">"]], ...] = (
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("path", help="a corpus directory or a source directory")
+    parser.add_argument("path", help="A corpus directory or a source directory")
 
 
 def _tokenizer(style: Style, tokenizer_id: str | None, tokenizer_hash: str | None) -> str:

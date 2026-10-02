@@ -9,11 +9,11 @@ from tokbin.cli.render import fmt_bytes
 from tokbin.ops.clean import clean_source
 
 NAME = "clean"
-HELP = "remove the unfinished write (<name>.partial) of a source; the source itself stays"
+HELP = "Remove the unfinished write (<name>.partial) of a source"
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("path", help="a source directory, or its .partial directory")
+    parser.add_argument("path", help="A source directory, or its .partial directory")
 
 
 def run(args: argparse.Namespace, ctx: Context) -> Outcome:

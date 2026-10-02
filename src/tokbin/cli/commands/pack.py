@@ -10,18 +10,22 @@ from tokbin.ops.compression import METHODS
 from tokbin.ops.pack import pack_source
 
 NAME = "pack"
-HELP = "compress every file of a source into <name>.tbpack (a directory, or one .tar)"
+HELP = "Compress a source into <name>.tbpack"
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("path", help="a complete source directory")
-    parser.add_argument("--out", help="output directory (default: next to the source)")
-    parser.add_argument("--tar", action="store_true", help="write one <name>.tbpack.tar file")
+    parser.add_argument("path", help="A complete source directory")
     parser.add_argument(
-        "--method", choices=METHODS, help="compression (default: zstd if available, else lzma)"
+        "--out", metavar="DIR", help="Output directory [default: next to the source]"
     )
-    parser.add_argument("--level", type=int, help="compression level (default: zstd 3, lzma 3)")
-    parser.add_argument("--overwrite", action="store_true", help="replace an existing pack")
+    parser.add_argument(
+        "--tar", action="store_true", help="Write one <name>.tbpack.tar file instead of a directory"
+    )
+    parser.add_argument(
+        "--method", choices=METHODS, help="Compression [default: zstd if available, else lzma]"
+    )
+    parser.add_argument("--level", metavar="N", type=int, help="Compression level [default: 3]")
+    parser.add_argument("--overwrite", action="store_true", help="Replace an existing pack")
 
 
 def run(args: argparse.Namespace, ctx: Context) -> Outcome:

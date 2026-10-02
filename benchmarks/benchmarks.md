@@ -1,4 +1,4 @@
-# Benchmarks
+# images
 
 What tokbin costs, where the time goes, and where the limits are. Numbers come from
 the scripts in [`benchmarks/`](../benchmarks/README.md); every sample is kept in
@@ -45,7 +45,7 @@ the curves are what carries over.
 
 ### Where the time goes
 
-![write breakdown](benchmarks/write-breakdown.png)
+![write breakdown](images/write-breakdown.png)
 
 200,000 stories, each variant run 5 times in rounds (A B C, A B C, ...), best run:
 
@@ -82,7 +82,7 @@ by tokbin's own CPU work.
 
 ### The whole corpus and memory
 
-![full write](benchmarks/write-full.png)
+![full write](images/write-full.png)
 
 2,717,495 stories, each run in a fresh process, two rounds:
 
@@ -100,7 +100,7 @@ library and the allocator, not from tokbin. tokbin's own memory is the id hashes
 
 ### Document length: the main limitation
 
-![document length](benchmarks/write-doclen.png)
+![document length](images/write-doclen.png)
 
 The same 200,000 stories written as sentences, as stories, and as documents joined
 from 8, 64 and 1024 stories:
@@ -132,7 +132,7 @@ not affected.
 
 ### Tokenizer threads
 
-![threads](benchmarks/write-threads.png)
+![threads](images/write-threads.png)
 
 50,000 stories, `RAYON_NUM_THREADS` set per run (thousands of stories per second
 for the tokbin write; plain tokenization behaves the same):
@@ -159,7 +159,7 @@ was 11% for deepseek.
 
 ### Batch size
 
-![batch_docs](benchmarks/write-batch.png)
+![batch_docs](images/write-batch.png)
 
 `batch_docs` is how many documents go to one `encode_batch` call. One document at a
 time is 3.5× slower; from 64 documents on the curve is flat. The default of 1024
@@ -168,7 +168,7 @@ the two parts of the curve are not strictly comparable.)
 
 ### Shard size
 
-![shard size](benchmarks/write-shards.png)
+![shard size](images/write-shards.png)
 
 With tokenization replayed (the writer alone), 200,000 stories:
 
@@ -183,7 +183,7 @@ worse too (below).
 
 ### Interrupting and resuming
 
-![resume](benchmarks/write-resume.png)
+![resume](images/write-resume.png)
 
 200,000 stories in 16 MiB shards (4.2M `uint32` tokens, about 21,000 stories per
 shard), interrupted after a share of the input and resumed:
@@ -203,7 +203,7 @@ tokenization on this machine; an interruption before the first shard closes (the
 
 ### Duplicate id detection
 
-![id hashes](benchmarks/write-idhashes.png)
+![id hashes](images/write-idhashes.png)
 
 Every document id is kept as an 8-byte hash to report duplicate ids at the end:
 
@@ -239,7 +239,7 @@ full deepseek corpus: 530M `uint32` tokens in 4 shards, 2.7M documents.
 
 ### Single calls
 
-![calls](benchmarks/read-calls.png)
+![calls](images/read-calls.png)
 
 | call (median) | tokbin | numpy on a memmap |
 |---|---|---|
@@ -257,7 +257,7 @@ takes 1.6 s. Read slices or windows instead.
 
 ### Windows
 
-![windows](benchmarks/read-windows.png)
+![windows](images/read-windows.png)
 
 A window inside one shard is a view: 1.6 µs whatever its length, because no data is
 read yet. The cost appears when the data is used; converting to `int64` for torch
@@ -267,7 +267,7 @@ a million.
 
 ### Batches of random windows
 
-![sampling](benchmarks/read-sampling.png)
+![sampling](images/read-sampling.png)
 
 | batch × block | `sample_windows` | `Mixture.batch` (1 source) | numpy, Python loop | numpy, fancy indexing |
 |---|---|---|---|---|
@@ -286,7 +286,7 @@ one by one in Python (~1.7 µs each), and vectorized numpy is 4–5× faster for
 
 ### Number of shards
 
-![shards](benchmarks/read-shards.png)
+![shards](images/read-shards.png)
 
 The same 20M tokens split into 2 … 10,099 shards:
 
@@ -307,7 +307,7 @@ multiply that.
 
 ### Number of documents
 
-![documents](benchmarks/read-docs.png)
+![documents](images/read-docs.png)
 
 | documents | 10k | 100k | 1M | 10M |
 |---|---|---|---|---|
@@ -320,7 +320,7 @@ documents: the indexes are memory-mapped, not loaded.
 
 ### Cold reads
 
-![cold](benchmarks/read-cold.png)
+![cold](images/read-cold.png)
 
 Copies of the source written with `F_NOCACHE`, so that the first read really goes to
 the SSD:
@@ -341,7 +341,7 @@ higher; there, keep the corpus on a local disk or make sure it fits in memory.
 
 ### Memory while sampling
 
-![memory](benchmarks/read-memory.png)
+![memory](images/read-memory.png)
 
 The resident memory of a process sampling random windows grows until it equals the
 size of the shards (2 GB here) and stays there. These are file pages mapped into the
@@ -353,7 +353,7 @@ does not, reads become cold reads.
 
 ### Mixtures
 
-![mixture](benchmarks/read-mixture.png)
+![mixture](images/read-mixture.png)
 
 `Mixture.batch(32, 2048)` takes 89 µs with one source (69 µs for the source alone)
 and 205 µs with 16 sources: drawing sources and grouping rows costs ~8 µs per
@@ -361,7 +361,7 @@ source.
 
 ### torch DataLoader
 
-![torch](benchmarks/torch-loader.png)
+![torch](images/torch-loader.png)
 
 Batches of 32 × 2048 per second, shuffled, `spawn` workers:
 
@@ -399,7 +399,7 @@ here), which is why their share doubles for `uint16`.
 
 ### pack
 
-![pack](benchmarks/storage-pack.png)
+![pack](images/storage-pack.png)
 
 | method | deepseek: size, pack / unpack | bpe12k: size, pack / unpack |
 |---|---|---|
@@ -449,7 +449,7 @@ In order of practical impact:
 - Not measured: Linux and Windows, network file systems, more than one writer at a
   time, corpora larger than the RAM of the machine.
 
-Regression checks: `benchmarks/regress.py` runs a synthetic suite in about 40 s and
-fails when a metric is more than 10% slower than `benchmarks/baseline.json`. On this
+Regression checks: `images/regress.py` runs a synthetic suite in about 40 s and
+fails when a metric is more than 10% slower than `images/baseline.json`. On this
 machine repeated runs stay within ±2% (±7% for mixtures), and an artificial 0.5 µs
 slowdown of reads is caught on the six metrics it affects.

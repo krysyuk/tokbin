@@ -8,15 +8,17 @@ from tokbin.cli.context import Context, Outcome
 from tokbin.ops.migrate import migrate_source
 
 NAME = "migrate"
-HELP = "convert a source to the current format schema (a new copy unless --in-place)"
+HELP = "Convert a source to the current format schema"
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("path", help="a source directory")
+    parser.add_argument("path", help="A source directory")
     target = parser.add_mutually_exclusive_group()
-    target.add_argument("--out", help="where to write the converted copy (default: <name>-v<N>)")
     target.add_argument(
-        "--in-place", action="store_true", help="replace the source itself instead of copying"
+        "--out", metavar="DIR", help="Where to write the converted copy [default: <name>-v<N>]"
+    )
+    target.add_argument(
+        "--in-place", action="store_true", help="Replace the source itself instead of copying"
     )
 
 

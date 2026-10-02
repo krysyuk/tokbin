@@ -10,11 +10,11 @@ from tokbin.cli.views import dir_label, source_rows
 from tokbin.ops.inspect import CorpusInfo, inspect_corpus
 
 NAME = "ls"
-HELP = "list the sources of a corpus with their states and sizes"
+HELP = "List the sources of a corpus with states and sizes"
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("root", nargs="?", default=".", help="corpus directory (default: .)")
+    parser.add_argument("root", nargs="?", default=".", help="Corpus directory [default: .]")
 
 
 def exit_code(corpus: CorpusInfo) -> int:

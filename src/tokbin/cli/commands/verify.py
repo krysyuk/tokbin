@@ -12,7 +12,7 @@ from tokbin.ops.inspect import SourceInfo, describe
 from tokbin.ops.verify import ShardCheck, VerifyProgress, VerifyReport, verify_source
 
 NAME = "verify"
-HELP = "hash every shard and check all files of a source (or of every source of a corpus)"
+HELP = "Hash every shard and check all files of a source or a corpus"
 
 _SHARD_TEXT = {
     "ok": "sha256 ok",
@@ -23,7 +23,7 @@ _SHARD_TEXT = {
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("path", help="a source directory or a corpus directory")
+    parser.add_argument("path", help="A source directory or a corpus directory")
 
 
 def _verify(path: Path, ctx: Context) -> VerifyReport:

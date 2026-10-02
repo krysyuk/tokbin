@@ -4,6 +4,8 @@
   on Windows the console VT mode is enabled first, and without it there is no color.
 - Every status has a symbol; color is never the only carrier of meaning.
 - ``✔ ! ✖`` become ``[ok] [!] [x]`` when the output encoding is not UTF-8.
+- The accent (commands and flags in help) is a light flesh tone: 24-bit where the
+  terminal announces it, the nearest xterm-256 color elsewhere.
 """
 
 from __future__ import annotations
@@ -30,6 +32,8 @@ Mark = Literal["ok", "warn", "error", "skip"]
 
 _RESET = "\x1b[0m"
 _CODES = {"green": "32", "yellow": "33", "red": "31", "dim": "2", "bold": "1"}
+_ACCENT_TRUECOLOR = "1;38;2;242;196;170"  # bold #F2C4AA
+_ACCENT_256 = "1;38;5;223"  # bold #FFD7AF, the nearest xterm-256 color
 
 _UNICODE_MARKS: dict[Mark, str] = {"ok": "✔", "warn": "!", "error": "✖", "skip": "\u2013"}
 _ASCII_MARKS: dict[Mark, str] = {"ok": "[ok]", "warn": "[!]", "error": "[x]", "skip": "[-]"}
@@ -42,11 +46,21 @@ class Style:
 
     color: bool
     unicode: bool
+    #: The terminal renders 24-bit colors; otherwise the accent uses the 256-color table.
+    truecolor: bool = False
 
     def paint(self, text: str, color: str) -> str:
         if not self.color or not text:
             return text
-        return f"\x1b[{_CODES[color]}m{text}{_RESET}"
+        if color == "accent":
+            code = _ACCENT_TRUECOLOR if self.truecolor else _ACCENT_256
+        else:
+            code = _CODES[color]
+        return f"\x1b[{code}m{text}{_RESET}"
+
+    def accent(self, text: str) -> str:
+        """Commands and flags the user can type."""
+        return self.paint(text, "accent")
 
     def green(self, text: str) -> str:
         return self.paint(text, "green")
@@ -142,7 +156,10 @@ def detect_style(stream: TextIO, *, no_color: bool) -> Style:
         and _isatty(stream)
         and _enable_windows_vt(stream)
     )
-    return Style(color=bool(color), unicode=_is_utf8(stream))
+    truecolor = os.environ.get("COLORTERM", "").lower() in {"truecolor", "24bit"} or bool(
+        os.environ.get("WT_SESSION")  # Windows Terminal
+    )
+    return Style(color=bool(color), unicode=_is_utf8(stream), truecolor=bool(color) and truecolor)
 
 
 # --- numbers --------------------------------------------------------------------------

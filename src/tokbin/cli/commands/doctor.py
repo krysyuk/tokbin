@@ -9,7 +9,7 @@ from tokbin.cli.render import Cell, Mark, table
 from tokbin.ops.doctor import doctor
 
 NAME = "doctor"
-HELP = "version, mode, dependencies and available features"
+HELP = "Show version, mode, dependencies and features"
 
 _MARKS: dict[str, Mark] = {"ok": "ok", "missing": "error", "optional": "skip"}
 

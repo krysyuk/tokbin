@@ -235,18 +235,92 @@ def test_error_text(corpus: Path, capsys: pytest.CaptureFixture[str]) -> None:
 
 
 @pytest.mark.parametrize(
-    "argv", [[], ["nope"], ["info"], ["verify", "a", "b"], ["info", "x", "--bad"]]
+    ("argv", "lines"),
+    [
+        (["nope"], ["error: unrecognized command 'nope'", "Usage: tokbin [OPTIONS] <COMMAND>"]),
+        (["bild"], ["  tip: a similar command exists: 'build'"]),
+        (["help", "bild"], ["  tip: a similar command exists: 'build'"]),
+        (
+            ["info"],
+            [
+                "error: the following required arguments were not provided:",
+                "  <PATH>",
+                "Usage: tokbin info [OPTIONS] <PATH>",
+                "For more information, try 'tokbin info --help'.",
+            ],
+        ),
+        (["verify", "a", "b"], ["error: unexpected argument 'b' found"]),
+        (["info", "x", "--bad"], ["error: unexpected argument '--bad' found"]),
+        (
+            ["build", "x", "--split", "nope"],
+            [
+                "error: invalid value 'nope' for '--split <SPLIT>'",
+                "  [possible values: train, valid, test]",
+            ],
+        ),
+        (
+            ["build", "x", "--from-txt", "a", "--from-jsonl", "b"],
+            ["error: the argument '--from-jsonl <PATH>' cannot be used with '--from-txt <DIR>'"],
+        ),
+        (
+            ["build", "x", "--tokenizer"],
+            ["error: a value is required for '--tokenizer <PATH>' but none was supplied"],
+        ),
+    ],
 )
-def test_usage_errors(argv: list[str], capsys: pytest.CaptureFixture[str]) -> None:
+def test_usage_errors(
+    argv: list[str], lines: list[str], capsys: pytest.CaptureFixture[str]
+) -> None:
     assert main(argv) == 2
-    assert "usage: tokbin" in capsys.readouterr().err
+    out, err = capsys.readouterr()
+    assert out == ""
+    for line in lines:
+        assert line in err.splitlines()
 
 
-def test_help(capsys: pytest.CaptureFixture[str]) -> None:
+@pytest.mark.parametrize("argv", [[], ["--help"], ["-h"], ["help"]])
+def test_help(argv: list[str], capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(argv) == 0
+    out, err = capsys.readouterr()
+    assert err == ""
+    lines = out.splitlines()
+    assert lines[0].startswith("tokbin ")
+    assert "Usage: tokbin [OPTIONS] <COMMAND>" in lines
+    for header in ("Write:", "Inspect:", "Transfer:", "Maintenance:", "Global options:"):
+        assert header in lines
+    for name in ("build", "ls", "info", "status", "verify", "pack", "rm", "doctor"):
+        assert any(line.startswith(f"  {name} ") for line in lines)
+    assert "  -V, --version   Print version" in lines
+    assert "Examples:" in lines
+
+
+@pytest.mark.parametrize("argv", [["build", "--help"], ["help", "build"]])
+def test_command_help(argv: list[str], capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(argv) == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0] == "Tokenize text files or JSON Lines into a source"
+    assert "Usage: tokbin build [OPTIONS] <TARGET>" in lines
+    # Sections in order, global options last.
+    headers = [line for line in lines if line.endswith(":") and not line.startswith(" ")]
+    assert headers == ["Arguments:", "Input:", "Tokenizer:", "Output:", "Global options:"]
+    assert any(line.startswith("      --shard-size <SIZE>") for line in lines)
+    assert "[possible values:" in "\n".join(lines)
+
+
+def test_help_colors(capsys: pytest.CaptureFixture[str]) -> None:
+    """Without a terminal the help has no escape codes; with one, the accent is used."""
+    from tokbin.cli.help import Parser
+    from tokbin.cli.render import Style
+
     assert main(["--help"]) == 0
-    out = capsys.readouterr().out
-    for name in ("ls", "info", "status", "verify", "doctor"):
-        assert name in out
+    assert "\x1b[" not in capsys.readouterr().out
+    parser = Parser(prog="tokbin", description="x", add_help=False)
+    parser.add_argument("--flag", help="A flag [default: off]")
+    true_lines = "\n".join(parser.help_lines(Style(color=True, unicode=True, truecolor=True)))
+    assert "\x1b[1;38;2;242;196;170m--flag\x1b[0m" in true_lines
+    assert "\x1b[2m[default:\x1b[0m" in true_lines
+    lines_256 = "\n".join(parser.help_lines(Style(color=True, unicode=True)))
+    assert "\x1b[1;38;5;223m--flag\x1b[0m" in lines_256
 
 
 def _raising(exc: BaseException) -> Callable[..., Any]:

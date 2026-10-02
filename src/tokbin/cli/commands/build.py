@@ -7,12 +7,13 @@ import re
 from pathlib import Path
 
 from tokbin.cli.context import Context, Outcome, plural
+from tokbin.cli.help import error_lines
 from tokbin.cli.render import fmt_count, fmt_int
 from tokbin.ops.build import BuildRecipe, build_source
 from tokbin.write.config import WriterConfig
 
 NAME = "build"
-HELP = "write a source from a directory of text files or JSON Lines"
+HELP = "Tokenize text files or JSON Lines into a source"
 
 _SIZE_RE = re.compile(r"^\s*(\d+(?:\.\d+)?)\s*([kmgt]?)(i?b)?\s*$", re.IGNORECASE)
 _UNITS = {"": 1, "k": 1024, "m": 1024**2, "g": 1024**3, "t": 1024**4}
@@ -41,29 +42,38 @@ def parse_size(text: str) -> int:
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("target", help="source directory to write, e.g. corpus/web")
-    source = parser.add_mutually_exclusive_group()
-    source.add_argument("--from-txt", metavar="DIR", help="every *.txt file is a document")
+    parser.add_argument("target", help="Source directory to write, e.g. corpus/web")
+    inputs = parser.add_argument_group("Input")
+    source = inputs.add_mutually_exclusive_group()
+    source.add_argument("--from-txt", metavar="DIR", help="Every *.txt file is a document")
     source.add_argument(
-        "--from-jsonl", metavar="PATH", help="every line of *.jsonl files is a document"
+        "--from-jsonl", metavar="PATH", help="Every line of *.jsonl files is a document"
     )
-    parser.add_argument("--field", help="JSON key with the text (default: text)")
-    parser.add_argument("--pattern", help="file pattern (default: *.txt / *.jsonl)")
-    parser.add_argument("--tokenizer", metavar="PATH", help="tokenizer.json")
-    parser.add_argument("--split", choices=("train", "valid", "test"), help="default: train")
-    parser.add_argument("--shard-size", type=parse_size, help="default: 512M")
-    parser.add_argument(
-        "--no-eos", action="store_true", default=None, help="no EOS after documents"
+    inputs.add_argument("--field", metavar="KEY", help="JSON key with the text [default: text]")
+    inputs.add_argument("--pattern", metavar="GLOB", help="File pattern [default: *.txt / *.jsonl]")
+    tokenizer = parser.add_argument_group("Tokenizer")
+    tokenizer.add_argument("--tokenizer", metavar="PATH", help="Path to tokenizer.json")
+    tokenizer.add_argument(
+        "--no-eos", action="store_true", default=None, help="No EOS after documents"
     )
-    parser.add_argument("--bos", action="store_true", default=None, help="BOS before documents")
-    parser.add_argument("--eos-token", help="EOS token text (default: detected)")
-    parser.add_argument("--bos-token", help="BOS token text (default: detected)")
-    parser.add_argument("--batch-docs", type=int, help="documents per tokenizer batch")
-    parser.add_argument("--overwrite", action="store_true", help="replace an existing split")
-    parser.add_argument(
+    tokenizer.add_argument("--bos", action="store_true", default=None, help="BOS before documents")
+    tokenizer.add_argument("--eos-token", metavar="TEXT", help="EOS token text [default: detected]")
+    tokenizer.add_argument("--bos-token", metavar="TEXT", help="BOS token text [default: detected]")
+    tokenizer.add_argument(
+        "--batch-docs", metavar="N", type=int, help="Documents per tokenizer batch"
+    )
+    output = parser.add_argument_group("Output")
+    output.add_argument(
+        "--split", choices=("train", "valid", "test"), help="Split to write [default: train]"
+    )
+    output.add_argument(
+        "--shard-size", metavar="SIZE", type=parse_size, help="Shard size [default: 512M]"
+    )
+    output.add_argument("--overwrite", action="store_true", help="Replace an existing split")
+    output.add_argument(
         "--resume",
         action="store_true",
-        help="continue an interrupted build (its saved settings are used if no input is given)",
+        help="Continue an interrupted build; without an input its saved settings are used",
     )
 
 
@@ -112,7 +122,8 @@ def run(args: argparse.Namespace, ctx: Context) -> Outcome:
     try:
         recipe = _recipe(args)
     except UsageError as exc:
-        ctx.err.write(f"tokbin build: error: {exc}\n")
+        lines = error_lines(ctx.err_style, str(exc), prog=f"tokbin {NAME}")
+        ctx.err.write("\n".join(lines) + "\n")
         return Outcome(exit_code=2, data={"usage_error": str(exc)})
     progress = ctx.progress()
 

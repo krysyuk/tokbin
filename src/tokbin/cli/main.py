@@ -28,8 +28,9 @@ from collections.abc import Sequence
 
 from tokbin._deps import detect_mode
 from tokbin._version import get_version
-from tokbin.cli.commands import COMMANDS
+from tokbin.cli.commands import COMMANDS, GROUPS
 from tokbin.cli.context import Context, Outcome
+from tokbin.cli.help import GLOBAL_OPTIONS, Parser
 from tokbin.errors import DependencyError, IntegrityError, InternalError, TokbinError
 
 __all__ = ["EXIT_DEPENDENCY", "EXIT_ERROR", "EXIT_INTEGRITY", "EXIT_INTERRUPTED", "main"]
@@ -45,7 +46,16 @@ EXIT_INTERRUPTED = 130
 JSON_FORMAT = 1
 
 
-def _common_options(default: object) -> argparse.ArgumentParser:
+TAGLINE = "tokenized corpora as memory-mappable binary shards"
+
+EXAMPLES = (
+    ("tokbin build", "corpus/web --from-jsonl data/ --tokenizer tokenizer.json"),
+    ("tokbin ls", "corpus"),
+    ("tokbin verify", "corpus/web"),
+)
+
+
+def _common_options(default: object, *, version: bool = False) -> Parser:
     """Options accepted both before and after the command name.
 
     The main parser and every subparser get their own copies: argparse shares action
@@ -53,38 +63,75 @@ def _common_options(default: object) -> argparse.ArgumentParser:
     into the others. Subparsers use ``SUPPRESS``, so a flag given before the command
     is not reset by the subcommand's default.
     """
-    common = argparse.ArgumentParser(add_help=False)
-    common.add_argument(
-        "--json", action="store_true", default=default, help="machine-readable output"
+    common = Parser(add_help=False)
+    group = common.add_argument_group(GLOBAL_OPTIONS)
+    group.add_argument(
+        "--json", action="store_true", default=default, help="Print one JSON document to stdout"
     )
-    common.add_argument("--no-color", action="store_true", default=default, help="disable colors")
-    common.add_argument(
+    group.add_argument(
+        "--no-color",
+        action="store_true",
+        default=default,
+        help="Disable colors (also: NO_COLOR=1)",
+    )
+    group.add_argument(
         "--strict",
         action="store_true",
         default=default,
-        help="exit with code 1 when there are warnings (for CI)",
+        help="Exit with code 1 on warnings (for CI)",
     )
+    group.add_argument("-h", "--help", action="help", help="Print help")
+    if version:
+        group.add_argument(
+            "-V",
+            "--version",
+            action="version",
+            version=f"tokbin {get_version()}",
+            help="Print version",
+        )
     return common
 
 
-def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
+def _parser(*, no_color: bool = False) -> Parser:
+    parser = Parser(
         prog="tokbin",
-        description="Tokenized corpora as binary shards.",
-        parents=[_common_options(False)],
+        description=TAGLINE,
+        add_help=False,
+        parents=[_common_options(False, version=True)],
     )
-    parser.set_defaults(command=None)
-    parser.add_argument("--version", action="version", version=f"tokbin {get_version()}")
-    sub = parser.add_subparsers(title="commands", metavar="<command>")
+    parser.set_defaults(command=None, topic=None)
+    parser.no_color = no_color
+    parser.version = get_version()
+    parser.command_groups = [
+        (title, [(m.NAME, m.HELP) for m in modules]) for title, modules in GROUPS
+    ]
+    parser.examples = EXAMPLES
+    parser.footer = lambda s: (
+        f"Use {s.accent('tokbin help <command>')} for more information on a command."
+    )
+    sub = parser.add_subparsers(metavar="<command>", parser_class=Parser)
     for module in COMMANDS:
         cmd = sub.add_parser(
             module.NAME,
-            help=module.HELP,
+            prog=f"tokbin {module.NAME}",
             description=module.HELP,
+            add_help=False,
             parents=[_common_options(argparse.SUPPRESS)],
         )
+        cmd.no_color = no_color
         module.add_arguments(cmd)
         cmd.set_defaults(command=module)
+        parser.subcommands[module.NAME] = cmd
+    helper = sub.add_parser(
+        "help",
+        prog="tokbin help",
+        description="Show help for tokbin or one of its commands",
+        add_help=False,
+        parents=[_common_options(argparse.SUPPRESS)],
+    )
+    helper.no_color = no_color
+    helper.add_argument("topic", nargs="?", metavar="COMMAND", help="Command to describe")
+    helper.set_defaults(command=None)
     return parser
 
 
@@ -126,15 +173,26 @@ def _render_error(ctx: Context, exc: BaseException) -> None:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the CLI and return the exit code."""
-    parser = _parser()
+    argv = list(sys.argv[1:] if argv is None else argv)
+    # Parsed before argparse runs: --help and usage errors are printed while parsing.
+    parser = _parser(no_color="--no-color" in argv)
     try:
-        args = parser.parse_args(argv)
+        args, extras = parser.parse_known_args(argv)
+        # Report extra arguments against the command they were given to.
+        if extras:
+            target = parser.subcommands[args.command.NAME] if args.command else parser
+            target.error(f"unrecognized arguments: {' '.join(extras)}")
+        if args.command is None:
+            # `tokbin`, `tokbin help` and `tokbin help <command>` print help.
+            if args.topic is None:
+                parser.print_help()
+                return EXIT_OK
+            if args.topic not in parser.subcommands:
+                parser.unknown_command(args.topic)
+            parser.subcommands[args.topic].print_help()
+            return EXIT_OK
     except SystemExit as exc:  # --help, --version and usage errors
         return exc.code if isinstance(exc.code, int) else EXIT_USAGE
-    if args.command is None:
-        parser.print_usage(sys.stderr)
-        sys.stderr.write("tokbin: error: a command is required (see `tokbin --help`)\n")
-        return EXIT_USAGE
 
     ctx = Context.create(json=args.json, strict=args.strict, no_color=args.no_color)
     name = args.command.NAME

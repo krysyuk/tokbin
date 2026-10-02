@@ -9,14 +9,16 @@ from tokbin.cli.render import fmt_bytes
 from tokbin.ops.pack import unpack_pack
 
 NAME = "unpack"
-HELP = "unpack a .tbpack (directory or .tar), check every sha256, then publish the source"
+HELP = "Unpack a .tbpack, check every sha256, publish the source"
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("pack", help="a <name>.tbpack directory or <name>.tbpack.tar file")
-    parser.add_argument("--into", help="corpus directory to unpack into (default: next to it)")
-    parser.add_argument("--name", help="source name (default: the name stored in the pack)")
-    parser.add_argument("--overwrite", action="store_true", help="replace an existing source")
+    parser.add_argument("pack", help="A <name>.tbpack directory or <name>.tbpack.tar file")
+    parser.add_argument(
+        "--into", metavar="DIR", help="Corpus directory to unpack into [default: next to the pack]"
+    )
+    parser.add_argument("--name", help="Source name [default: the name stored in the pack]")
+    parser.add_argument("--overwrite", action="store_true", help="Replace an existing source")
 
 
 def run(args: argparse.Namespace, ctx: Context) -> Outcome:
