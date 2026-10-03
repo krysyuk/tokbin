@@ -36,6 +36,10 @@ jobs:
             uv run --no-project python scripts/check_versions.py
           fi
       - run: uv build --package tokbin-core --out-dir dist/core
+      # Users install `tokbin`, so its PyPI page shows the full README. hatchling cannot
+      # read files outside packages/tokbin/, hence the copy right before the build.
+      - name: use the main README for the tokbin meta-package
+        run: cp README.md packages/tokbin/README.md
       - run: uv build --package tokbin --out-dir dist/meta
       - uses: actions/upload-artifact@v4
         with:

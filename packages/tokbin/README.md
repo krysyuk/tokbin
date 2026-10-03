@@ -1,3 +1,6 @@
+<!-- Local builds only: the release workflow replaces this file with the root
+     README.md, so the PyPI page of `tokbin` shows the full description. -->
+
 # tokbin
 
 Pretraining data for language models: tokenize a text corpus once into resumable,
