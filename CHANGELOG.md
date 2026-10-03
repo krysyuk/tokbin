@@ -3,7 +3,7 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); versions follow
 SemVer (PEP 440). A **Breaking** section comes first in an entry whenever it is not empty.
 
-## [Unreleased]
+## [0.1.0] - 2026-10-03
 
 schema_version: 1
 
