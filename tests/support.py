@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -83,3 +84,8 @@ def copy_fixture(dst: Path) -> Path:
 
     shutil.copytree(FIXTURE, dst)
     return dst
+
+
+def native(text: str) -> str:
+    """``text`` with this OS's path separator: the CLI prints paths the native way."""
+    return text.replace("/", os.sep)

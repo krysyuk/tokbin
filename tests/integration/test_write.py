@@ -323,7 +323,7 @@ def test_stored_copy_is_enough_for_another_split(tmp_path: Path) -> None:
     ds = Dataset(tmp_path / "corpus")
     ds.write("code", [("a", "t0")], path)
     stored = tmp_path / "corpus" / "code" / "tokenizer" / "tokenizer.json"
-    assert json.loads(stored.with_name("tokenizer_config.json").read_text()) == {
+    assert json.loads(stored.with_name("tokenizer_config.json").read_text(encoding="utf-8")) == {
         "eos_token": DS_EOS,
         "bos_token": None,
     }

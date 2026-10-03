@@ -27,7 +27,7 @@ from tokbin import (
 from tokbin.cli import main as cli_main
 from tokbin.cli.main import main
 
-from support import EOS, encode, make_docs, read_ids, read_skipped
+from support import EOS, encode, make_docs, native, read_ids, read_skipped
 
 pytestmark = [
     pytest.mark.requires_tokenizers,
@@ -160,7 +160,7 @@ def test_cli(
     assert main([*argv, "--shard-size", "64"]) == 0
     out, err = capsys.readouterr()
     lines = out.splitlines()
-    assert lines[0] == "✔ built c/web [train]"
+    assert lines[0] == native("✔ built c/web [train]")
     assert lines[1] == "  60 docs · 488 tokens · 16 shards · 1 skipped"
     assert any("[TB-D206] Input record cannot be read: document 'a.jsonl:5'" in x for x in lines)
     assert lines[-1] == "! Status: complete · 2 warnings"

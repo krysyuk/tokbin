@@ -1,0 +1,9 @@
+# Text files are stored and checked out with LF on every OS.
+* text=auto eol=lf
+
+# Test fixtures are byte-exact datasets: index files point at byte offsets in the
+# .jsonl files, so a CRLF checkout on Windows would corrupt them. Never convert.
+tests/fixtures/** -text
+*.bin binary
+*.npy binary
+*.png binary

@@ -4,6 +4,7 @@ import io
 
 import pytest
 
+from tokbin.cli import render
 from tokbin.cli.progress import Progress
 from tokbin.cli.render import Cell, Style, detect_style, fmt_bytes, fmt_count, fmt_int, table
 
@@ -61,6 +62,8 @@ def test_fmt_int() -> None:
 
 
 def test_style_detection(monkeypatch: pytest.MonkeyPatch) -> None:
+    # The fake stream has no Windows console to switch into VT mode.
+    monkeypatch.setattr(render, "_enable_windows_vt", lambda stream: True)
     monkeypatch.delenv("NO_COLOR", raising=False)
     monkeypatch.delenv("TERM", raising=False)
     monkeypatch.delenv("COLORTERM", raising=False)
@@ -81,6 +84,8 @@ def test_style_detection(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_truecolor_detection(monkeypatch: pytest.MonkeyPatch) -> None:
+    # The fake stream has no Windows console to switch into VT mode.
+    monkeypatch.setattr(render, "_enable_windows_vt", lambda stream: True)
     monkeypatch.delenv("NO_COLOR", raising=False)
     monkeypatch.delenv("TERM", raising=False)
     monkeypatch.delenv("WT_SESSION", raising=False)

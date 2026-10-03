@@ -22,7 +22,7 @@ from tokbin.cli import main as cli_main
 from tokbin.cli.main import main
 from tokbin.ops import compression
 
-from support import copy_fixture
+from support import copy_fixture, native
 
 
 @pytest.fixture
@@ -147,7 +147,7 @@ def test_cli(
     monkeypatch.setattr(cli_main, "detect_mode", lambda: "full")
     assert main(["pack", "corpus/web", "--out", "packs", "--tar"]) == 0
     lines = capsys.readouterr().out.splitlines()
-    assert lines[0] == "✔ packed corpus/web → packs/web.tbpack.tar"
+    assert lines[0] == native("✔ packed corpus/web → packs/web.tbpack.tar")
     assert lines[2].startswith("✔ Status: 14 files · 9.8 KiB → ")
     assert lines[2].endswith(" · zstd-3")
 

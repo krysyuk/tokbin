@@ -20,7 +20,7 @@ from tokbin.cli.commands import info as info_cmd
 from tokbin.cli.main import main
 from tokbin.ops.inspect import inspect_corpus
 
-from support import copy_fixture
+from support import copy_fixture, native
 
 
 @pytest.fixture
@@ -56,7 +56,7 @@ def test_info_source(corpus: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert (code, err) == (0, "")
     assert out == "\n".join(
         [
-            "corpus/web/   360 tokens · complete",
+            native("corpus/web/   360 tokens · complete"),
             "",
             "  dtype       uint16 · vocab 303",
             "  tokenizer   unnamed · 5b6c9ce0 · eos 1 · bos 2",
@@ -126,8 +126,8 @@ def test_status_with_unfinished_write(corpus: Path, capsys: pytest.CaptureFixtur
     code, out, _ = run(capsys, "status", "corpus/web")
     assert code == 0
     lines = out.splitlines()
-    assert lines[0] == "corpus/web/   complete · train, valid"
-    assert lines[2] == "  ! unfinished write   corpus/web.partial"
+    assert lines[0] == native("corpus/web/   complete · train, valid")
+    assert lines[2] == native("  ! unfinished write   corpus/web.partial")
     assert lines[3].startswith(" " * 23 + "split valid · 0 shards closed · updated ")
     assert lines[-1] == "! Status: complete · 1 warning"
 
@@ -141,7 +141,7 @@ def test_verify(corpus: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert code == 0
     assert out == "\n".join(
         [
-            "corpus/web/",
+            native("corpus/web/"),
             "",
             "  ✔ train-00000.bin   256 B   sha256 ok",
             "  ✔ train-00001.bin   256 B   sha256 ok",
@@ -161,9 +161,10 @@ def test_verify_damaged(corpus: Path, capsys: pytest.CaptureFixture[str]) -> Non
     assert code == 3
     lines = out.splitlines()
     assert lines[3] == "  ✖ train-00001.bin   256 B   sha256 mismatch"
-    assert lines[7] == "[TB-I302] Shard is corrupted: corpus/web/train-00001.bin"
+    assert lines[7] == native("[TB-I302] Shard is corrupted: corpus/web/train-00001.bin")
     assert lines[8].startswith("  cause: sha256 ")
-    assert lines[9] == "  fix:   download the shard again and repeat `tokbin verify corpus/web`"
+    fix = "  fix:   download the shard again and repeat `tokbin verify corpus/web`"
+    assert lines[9] == native(fix)
     assert lines[-1] == "✖ Status: damaged · 1 of 4 shards"
 
 
@@ -216,7 +217,7 @@ def test_json_error(corpus: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert document["error"] == {
         "type": "ConfigError",
         "code": "TB-C305",
-        "what": "Dataset path not found: corpus/missing",
+        "what": native("Dataset path not found: corpus/missing"),
         "why": "neither the source directory nor an unfinished write of it exists",
         "fix": "check the path; `tokbin ls <corpus>` lists the sources of a corpus",
         "where": "tokbin.ops.inspect.inspect_source",
@@ -227,7 +228,7 @@ def test_error_text(corpus: Path, capsys: pytest.CaptureFixture[str]) -> None:
     code, out, err = run(capsys, "info", "corpus/missing")
     assert (code, out) == (1, "")
     assert err.splitlines() == [
-        "✖ [TB-C305] Dataset path not found: corpus/missing",
+        native("✖ [TB-C305] Dataset path not found: corpus/missing"),
         "  where: tokbin.ops.inspect.inspect_source",
         "  cause: neither the source directory nor an unfinished write of it exists",
         "  fix:   check the path; `tokbin ls <corpus>` lists the sources of a corpus",
@@ -383,7 +384,7 @@ def test_library_warnings_are_shown_and_counted(
     monkeypatch.setattr(info_cmd, "run", warn_then_run)
     code, out, err = run(capsys, "info", "corpus/web")
     assert code == 0
-    assert out.startswith("corpus/web/")
+    assert out.startswith(native("corpus/web/"))
     assert err == "! old schema\n"
     assert run(capsys, "--strict", "info", "corpus/web")[0] == 1
     code, document = run_json(capsys, "info", "corpus/web")
