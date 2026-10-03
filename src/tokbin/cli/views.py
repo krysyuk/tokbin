@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import os
-
 from tokbin.cli.context import plural
 from tokbin.cli.render import Cell, Mark, Style, fmt_bytes, fmt_count, table
 from tokbin.ops.inspect import PartialInfo, Problem, SourceInfo
@@ -22,9 +20,9 @@ _GAP = "   "
 
 
 def dir_label(path: object) -> str:
-    """A directory as the user wrote it, with a trailing separator of this OS."""
+    """A directory as the user wrote it, with a trailing slash."""
     text = str(path)
-    return text if text.endswith(("/", "\\")) else text + os.sep
+    return text if text.endswith(("/", "\\")) else text + "/"
 
 
 def source_mark(info: SourceInfo) -> Mark:
