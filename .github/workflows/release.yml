@@ -6,7 +6,8 @@ name: Release
 #   push a tag vX.Y.Z    -> full CI, build, publish to PyPI
 #   run by hand          -> full CI, build, publish to TestPyPI (a dry run)
 #
-# tokbin-core is uploaded first: the meta-package pins tokbin-core==X.Y.Z.
+# tokbin-core is uploaded first: the meta-package pins tokbin-core==X.Y.Z, so it is
+# published only after tokbin-core succeeded.
 on:
   push:
     tags: ["v*"]
@@ -41,10 +42,13 @@ jobs:
           name: dist
           path: dist/
 
-  publish:
+  # One environment per package: PyPI does not allow two pending publishers with the
+  # same repository, workflow and environment. Environments: pypi-tokbin-core,
+  # pypi-tokbin (tags) and testpypi-tokbin-core, testpypi-tokbin (manual runs).
+  publish-core:
     needs: build
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_type == 'tag' && 'pypi' || 'testpypi' }}
+    environment: ${{ github.ref_type == 'tag' && 'pypi' || 'testpypi' }}-tokbin-core
     permissions:
       id-token: write  # Trusted Publishing
     steps:
@@ -52,13 +56,23 @@ jobs:
         with:
           name: dist
           path: dist/
-      - name: publish tokbin-core
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/core/
           repository-url: ${{ github.ref_type == 'tag' && 'https://upload.pypi.org/legacy/' || 'https://test.pypi.org/legacy/' }}
-      - name: publish tokbin
-        uses: pypa/gh-action-pypi-publish@release/v1
+
+  publish-meta:
+    needs: publish-core
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_type == 'tag' && 'pypi' || 'testpypi' }}-tokbin
+    permissions:
+      id-token: write  # Trusted Publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/meta/
           repository-url: ${{ github.ref_type == 'tag' && 'https://upload.pypi.org/legacy/' || 'https://test.pypi.org/legacy/' }}
