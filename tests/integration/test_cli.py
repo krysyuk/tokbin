@@ -56,7 +56,7 @@ def test_info_source(corpus: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert (code, err) == (0, "")
     assert out == "\n".join(
         [
-            native("corpus/web/   360 tokens · complete"),
+            "corpus/web/   360 tokens · complete",
             "",
             "  dtype       uint16 · vocab 303",
             "  tokenizer   unnamed · 5b6c9ce0 · eos 1 · bos 2",
@@ -126,7 +126,7 @@ def test_status_with_unfinished_write(corpus: Path, capsys: pytest.CaptureFixtur
     code, out, _ = run(capsys, "status", "corpus/web")
     assert code == 0
     lines = out.splitlines()
-    assert lines[0] == native("corpus/web/   complete · train, valid")
+    assert lines[0] == "corpus/web/   complete · train, valid"
     assert lines[2] == native("  ! unfinished write   corpus/web.partial")
     assert lines[3].startswith(" " * 23 + "split valid · 0 shards closed · updated ")
     assert lines[-1] == "! Status: complete · 1 warning"
@@ -141,7 +141,7 @@ def test_verify(corpus: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert code == 0
     assert out == "\n".join(
         [
-            native("corpus/web/"),
+            "corpus/web/",
             "",
             "  ✔ train-00000.bin   256 B   sha256 ok",
             "  ✔ train-00001.bin   256 B   sha256 ok",
@@ -384,7 +384,7 @@ def test_library_warnings_are_shown_and_counted(
     monkeypatch.setattr(info_cmd, "run", warn_then_run)
     code, out, err = run(capsys, "info", "corpus/web")
     assert code == 0
-    assert out.startswith(native("corpus/web/"))
+    assert out.startswith("corpus/web/")
     assert err == "! old schema\n"
     assert run(capsys, "--strict", "info", "corpus/web")[0] == 1
     code, document = run_json(capsys, "info", "corpus/web")

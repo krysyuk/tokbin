@@ -123,5 +123,3 @@ schema_version: 1
 
 - Calling a public function with wrong arguments raises the usual `TypeError`
   instead of `InternalError`.
-- On Windows the CLI printed directory headers with mixed separators
-  (`corpus\web/`); it now uses the native one (`corpus\web\`).
